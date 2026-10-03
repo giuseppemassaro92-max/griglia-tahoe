@@ -410,7 +410,7 @@ const rest=m=>st('riposo','Togli dal fuoco e fai riposare (coperto con alluminio
 
 function steak(p,o){
   const t=p.t,f=p.f,s=[];let lid;
-  const mode=o.mode||(t<=(o.max||2.5)?'direct':o.thick);
+  const mode=(p.m&&p.m!=='auto')?p.m:(o.mode||(t<=(o.max||2.5)?'direct':o.thick));
   const z1=o.z1||'ir';
   if(mode==='direct'){
     const total=(o.c||1.32)*Math.pow(t,1.6)*f*60;
@@ -642,6 +642,21 @@ const CUTS=[
  calc:()=>done([st('media','Intere con la buccia, coperchio chiuso',360)],'200 °C'),tips:['Aprile per lungo e metti cioccolato fondente dentro.'],mar:['frutta']}
 ];
 const CUT=Object.fromEntries(CUTS.map(c=>[c.id,c]));
+/* tagli da bistecca: si può scegliere il metodo */
+CUTS.forEach(c=>{if(/steak\(/.test(String(c.calc)))c.methods=true});
+const METHODS={
+  auto:{l:'Automatico',i:'consigliato',d:'Sceglie l\'app in base allo spessore: fino a 2,5 cm solo diretta, sopra crosta + indiretta o cottura inversa.'},
+  direct:{l:'Solo diretta',i:'veloce',d:'Crosta sull\'infrarosso, poi finisci sopra i bruciatori accesi a fuoco medio con il coperchio chiuso. È il metodo più veloce e dà la crosta più forte. Va bene fino a 2,5–3 cm: oltre, fuori si brucia prima che il cuore arrivi a temperatura.'},
+  sear:{l:'Crosta + indiretta',i:'classico',d:'Prima scotti 1–2 min per lato sull\'infrarosso, poi sposti la carne sopra i bruciatori spenti e chiudi il coperchio finché la sonda arriva alla temperatura. È il metodo classico per fiorentina e filetto.'},
+  reverse:{l:'Cottura inversa',i:'più precisa',d:'Prima cuoci piano in indiretta a 160–180 °C fino a 8 °C sotto il punto voluto, poi fai la crosta sull\'infrarosso solo alla fine. La cottura è uniforme dal bordo al centro ed è il metodo più preciso per i tagli alti.'}
+};
+function methodNote(cut,s){
+  const m=s.m||'auto',t=s.t||0;
+  if(m==='auto'){const r=cut.calc({t,w:s.w,n:s.n,pull:55,fin:57,f:1,did:null,m:'auto'}).mode;return`Con ${String(t).replace('.',',')} cm l'app usa: <b>${METHODS[r==='sear'?'sear':r==='reverse'?'reverse':'direct'].l}</b>.`}
+  if(m==='direct'&&t>3)return`Attenzione: con ${String(t).replace('.',',')} cm la sola diretta è rischiosa. Usa la sonda e, se fuori scurisce troppo, sposta la carne in indiretta.`;
+  if(m!=='direct'&&t<2)return`Con ${String(t).replace('.',',')} cm l'indiretta serve a poco: la diretta è più semplice e altrettanto buona.`;
+  return'';
+}
 const short=c=>c.n.split(' / ')[0];
 
 /* ---------- note e correzioni ---------- */
@@ -666,7 +681,7 @@ function compute(cut,s0){
   let d=null,core=null;
   if(cut.dn){d=DN[cut.dn].find(x=>x.id===s0.did)||DN[cut.dn].find(x=>x.id===DEF_DN[cut.dn]);core={pull:d.pull,fin:d.fin}}
   else if(cut.fix&&!cut.fix.none)core={pull:cut.fix.pull,fin:cut.fix.fin};
-  const p={t:s0.t,w:s0.w,n:s0.n,pull:core?core.pull:0,fin:core?core.fin:0,f:d?fac(d.pull):1,did:d?d.id:null};
+  const p={t:s0.t,w:s0.w,n:s0.n,pull:core?core.pull:0,fin:core?core.fin:0,f:d?fac(d.pull):1,did:d?d.id:null,m:cut.methods?(s0.m||'auto'):'auto'};
   const r=cut.calc(p);
   const corr=(notes[cut.id]&&+notes[cut.id].corr)||0;
   const steps=r.s.map(x=>Object.assign({},x));
@@ -680,7 +695,7 @@ function compute(cut,s0){
 
 /* ---------- stato calcolatore ---------- */
 let S=store.get('calc',null);
-function defaults(cut){const i=cut.in||{};return{cat:cut.cat,cut:cut.id,t:i.t?i.t[2]:null,w:i.w?i.w[2]:null,n:i.n?i.n[2]:1,did:cut.dn?DEF_DN[cut.dn]:null,pre:S?S.pre:true,cold:S?!!S.cold:false}}
+function defaults(cut){const i=cut.in||{};return{cat:cut.cat,cut:cut.id,t:i.t?i.t[2]:null,w:i.w?i.w[2]:null,n:i.n?i.n[2]:1,did:cut.dn?DEF_DN[cut.dn]:null,pre:S?S.pre:true,cold:S?!!S.cold:false,m:'auto'}}
 if(!S||!CUT[S.cut])S=Object.assign(defaults(CUT.costata),{pre:true});
 
 function setCat(cat){const first=CUTS.find(c=>c.cat===cat);S=defaults(first);renderCalc()}
@@ -704,6 +719,10 @@ function renderCalc(){
   }else{
     const fx=cut.fix||{};
     $('#doneWrap').innerHTML=`<div class="label">Cottura</div><div class="fixed">${fx.none?esc(fx.label):`Sempre ben cotto: ${fx.fin} °C al cuore. Per sicurezza non si serve meno cotto.`}</div>`;
+  }
+  if(cut.methods){
+    const m=S.m||'auto',note=methodNote(cut,S);
+    $('#doneWrap').insertAdjacentHTML('beforeend',`<div class="label">Metodo</div><div class="seg" role="group" aria-label="Metodo di cottura">${Object.entries(METHODS).map(([k,v])=>`<button data-m="${k}" aria-pressed="${k===m}">${v.l}<i>${v.i}</i></button>`).join('')}</div><div class="fixed" style="margin-top:8px;color:var(--ink)">${METHODS[m].d}${note?`<br><span style="color:var(--ember);font-weight:600">${note}</span>`:''}</div>`);
   }
   if(coldInfo(cut,S)){
     $('#doneWrap').insertAdjacentHTML('beforeend',`<div class="label">Partenza</div><div class="seg" role="group" aria-label="Temperatura di partenza"><button data-cold="0" aria-pressed="${!S.cold}">Temp. ambiente<i>consigliata</i></button><button data-cold="1" aria-pressed="${!!S.cold}">Dal frigo<i>più lenta</i></button></div>`);
@@ -785,6 +804,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.cut){setCut(b.dataset.cut);return}
   if(b.dataset.did){S.did=b.dataset.did;renderCalc();return}
   if(b.dataset.cold){S.cold=b.dataset.cold==='1';renderCalc();return}
+  if(b.dataset.m){S.m=b.dataset.m;renderCalc();return}
   if(b.dataset.esito){logOutcome(b.dataset.esito);return}
   if(b.id==='applyHint'){const id=S.cut;notes[id]=Object.assign({},notes[id],{corr:+b.dataset.v});save('notes',notes);renderResult();renderSaved();toast('Correzione applicata');return}
   if(b.dataset.k){const cut=CUT[S.cut],k=b.dataset.k,rg=cut.in[k];S[k]=clamp(+(S[k]+(+b.dataset.d)*rg[3]).toFixed(2),rg[0],rg[1]);const inp=$('#in-'+k);if(inp)inp.value=S[k];renderResult();store.set('calc',S);return}
@@ -807,7 +827,7 @@ document.addEventListener('input',e=>{
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.hidden=true,2200)}
 
 /* ---------- preferiti ---------- */
-function summary(cut,s){const d=cut.dn?(DN[cut.dn].find(x=>x.id===s.did)||{}).l:'';return[s.t!=null&&cut.in.t?`${s.t} cm`:'',s.w!=null&&cut.in.w?`${s.w} g`:'',d,s.cold&&coldInfo(cut,s)?'dal frigo':''].filter(Boolean).join(' · ')}
+function summary(cut,s){const d=cut.dn?(DN[cut.dn].find(x=>x.id===s.did)||{}).l:'';return[s.t!=null&&cut.in.t?`${s.t} cm`:'',s.w!=null&&cut.in.w?`${s.w} g`:'',d,cut.methods&&s.m&&s.m!=='auto'?METHODS[s.m].l.toLowerCase():'',s.cold&&coldInfo(cut,s)?'dal frigo':''].filter(Boolean).join(' · ')}
 function addFav(){
   const cut=CUT[S.cut];const f={id:Date.now(),s:Object.assign({},S)};
   if(favs.some(x=>JSON.stringify(Object.assign({},x.s,{pre:0}))===JSON.stringify(Object.assign({},S,{pre:0})))){toast('È già nei preferiti');return}
@@ -835,9 +855,9 @@ if(!G){G={example:true,items:[
   {id:1,s:Object.assign(defaults(CUT.costata),{t:4,w:900,did:'ms'}),q:2},
   {id:2,s:Object.assign(defaults(CUT.costolette),{t:1.5,did:'ms'}),q:12},
   {id:3,s:Object.assign(defaults(CUT.salsiccia),{t:3}),q:10},
-  {id:4,s:defaults(CUT.peperoni),q:4}],serve:null}}
+  {id:4,s:defaults(CUT.peperoni),q:4}],serve:null,people:8}}
 function addToG(){
-  if(G.example){G={example:false,items:[],serve:G.serve}}
+  if(G.example){G={example:false,items:[],serve:G.serve,people:G.people||8}}
   const cut=CUT[S.cut];G.items.push({id:Date.now(),s:Object.assign({},S,{pre:false}),q:cut.in.n?S.n:1});
   save('grill',G);renderG();toast(`${short(cut)} aggiunto alla grigliata`);
 }
@@ -870,8 +890,10 @@ function plan(){
   return{its,ev,end,gas:gas/12.8};
 }
 function renderG(){
-  $('#gBanner').innerHTML=G.example?`<div class="banner"><span>Esempio di grigliata per 8–10 persone. Aggiungi i tuoi pezzi dal calcolatore.</span><button class="btn small" id="gUseEx">Tienilo</button></div>`:'';
-  $('#gItems').innerHTML=G.items.length?G.items.map(it=>{const c=CUT[it.s.cut];if(!c)return'';const r=compute(c,Object.assign({},it.s,{pre:false}));return`<div class="item"><div><b>${esc(c.n)}</b><small>${esc(summary(c,it.s)||c.d)} · ${fmt(r.total)}</small><br><button class="x" data-gdel="${it.id}">Rimuovi</button></div><div class="qty"><button data-gq="${it.id}" data-d="-1" aria-label="Meno">−</button><span>${it.q}</span><button data-gq="${it.id}" data-d="1" aria-label="Più">+</button></div></div>`}).join(''):`<div class="empty">La grigliata è vuota. Dal calcolatore scegli un taglio e tocca + Grigliata.</div>`;
+  $('#gBanner').innerHTML=G.example?`<div class="banner"><span>Esempio di grigliata per 8 persone. Aggiungi i tuoi pezzi dal calcolatore.</span><button class="btn small" id="gUseEx">Tienilo</button></div>`:'';
+  const ppl=G.people||8;
+  const pplHTML=`<div class="field" style="margin-bottom:8px"><label for="gPeople">Persone</label><div class="stepper"><button data-gp="-1" aria-label="Meno persone">−</button><input id="gPeople" inputmode="numeric" value="${ppl}"><span class="u">persone</span><button data-gp="1" aria-label="Più persone">+</button></div><p class="muted" style="margin:6px 0 0;font-size:13px">Cambiando il numero, i pezzi si ricalcolano in proporzione. Puoi sempre correggerli a mano con − e +.</p></div>`;
+  $('#gItems').innerHTML=pplHTML+(G.items.length?G.items.map(it=>{const c=CUT[it.s.cut];if(!c)return'';const r=compute(c,Object.assign({},it.s,{pre:false}));const kgTot=c.in.w&&it.s.w?` · ≈ ${(it.s.w*it.q/1000).toFixed(1).replace('.',',')} kg`:'';return`<div class="item"><div><b>${esc(c.n)}</b><small>${esc(summary(c,it.s)||c.d)} · ${fmt(r.total)}${kgTot}</small><br><button class="x" data-gdel="${it.id}">Rimuovi</button></div><div class="qty"><button data-gq="${it.id}" data-d="-1" aria-label="Meno">−</button><span>${it.q}</span><button data-gq="${it.id}" data-d="1" aria-label="Più">+</button></div></div>`}).join(''):`<div class="empty">La grigliata è vuota. Dal calcolatore scegli un taglio e tocca + Grigliata.</div>`);
   if(!G.items.length){$('#gPlan').innerHTML='';return}
   const P=plan();
   const serve=G.serve||(()=>{const d=new Date(Date.now()+P.end*1000+15*60000);d.setMinutes(Math.ceil(d.getMinutes()/15)*15);return`${String(d.getHours()%24).padStart(2,'0')}:${String(d.getMinutes()%60).padStart(2,'0')}`})();
@@ -889,14 +911,22 @@ function renderG(){
 }
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.gp){setPeople((G.people||8)+(+b.dataset.gp))}
   if(b.id==='gUseEx'){G.example=false;save('grill',G);renderG()}
-  if(b.id==='gClear'){G={example:false,items:[],serve:G.serve};save('grill',G);renderG()}
+  if(b.id==='gClear'){G={example:false,items:[],serve:G.serve,people:G.people||8};save('grill',G);renderG()}
   if(b.id==='gAdd'){showTab('cuoci')}
   if(b.dataset.gdel){G.items=G.items.filter(x=>String(x.id)!==b.dataset.gdel);G.example=false;save('grill',G);renderG()}
-  if(b.dataset.gq){const it=G.items.find(x=>String(x.id)===b.dataset.gq);if(it){it.q=Math.max(1,it.q+(+b.dataset.d));save('grill',G);renderG()}}
+  if(b.dataset.gq){const it=G.items.find(x=>String(x.id)===b.dataset.gq);if(it){it.q=Math.max(1,it.q+(+b.dataset.d));it.bq=it.q;it.bp=G.people||8;save('grill',G);renderG()}}
   if(b.id==='gStart'){const P=plan();startEvents('Grigliata',P.ev.map(x=>({at:x.at,z:x.z,t:x.text,probe:[x.probe,x.note].filter(Boolean).join(' · ')})),P.end,false,{grill:P.its.map(x=>({cut:x.c.id,s:Object.assign({},x.it.s),name:x.name}))})}
 });
-document.addEventListener('change',e=>{if(e.target.id==='gServe'){G.serve=e.target.value;save('grill',G);renderG()}});
+document.addEventListener('change',e=>{if(e.target.id==='gServe'){G.serve=e.target.value;save('grill',G);renderG()}
+  if(e.target.id==='gPeople')setPeople(parseInt(e.target.value,10))});
+function setPeople(n){
+  n=clamp(n,1,80);const old=G.people||8;if(n===old){renderG();return}
+  G.items.forEach(it=>{if(!it.bq){it.bq=it.q;it.bp=old}it.q=Math.max(1,Math.round(it.bq*n/it.bp))});
+  G.people=n;if(Q){Q.a=Math.max(1,n);save('qty',Q);renderQ()}
+  save('grill',G);renderG();
+}
 
 /* ---------- quantità ---------- */
 const QCATS=[

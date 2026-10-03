@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Griglia Tahoe">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ECEEEF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101214" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Griglia Tahoe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: colonna unica da telefono, barra schede fissa in basso; il timer è un foglio a tutto schermo con il conto alla rovescia gigante. */
+:root{
+  --bg:#ECEEEF; --surface:#FFFFFF; --sunk:#E1E5E7; --ink:#161A1D; --muted:#59636A; --line:#D2D8DB;
+  --ember:#C33E17; --ember-ink:#FFFFFF; --ember-soft:#F6DDD3;
+  --z-ir:#C33E17; --z-alta:#B8620F; --z-media:#94771A; --z-ind:#336387; --z-rest:#467456; --z-prep:#68727A;
+  --ok:#467456; --warn:#B8620F;
+  --f-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  --f-body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101214; --surface:#191D20; --sunk:#22282C; --ink:#ECEFF0; --muted:#97A1A7; --line:#2B3236;
+  --ember:#FF6E40; --ember-ink:#1B0C06; --ember-soft:#3A1F16;
+  --z-ir:#FF6E40; --z-alta:#F2994A; --z-media:#D9BE4E; --z-ind:#72A6CA; --z-rest:#82B691; --z-prep:#9AA3A9;
+  --ok:#82B691; --warn:#F2994A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101214; --surface:#191D20; --sunk:#22282C; --ink:#ECEFF0; --muted:#97A1A7; --line:#2B3236;
+  --ember:#FF6E40; --ember-ink:#1B0C06; --ember-soft:#3A1F16;
+  --z-ir:#FF6E40; --z-alta:#F2994A; --z-media:#D9BE4E; --z-ind:#72A6CA; --z-rest:#82B691; --z-prep:#9AA3A9;
+  --ok:#82B691; --warn:#F2994A; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:8px 112px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.num{font-variant-numeric:tabular-nums}
+
+/* testata */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:10px 14px}
+.brand{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:.9;letter-spacing:.01em;text-transform:uppercase}
+.brand span{color:var(--ember)}
+.model{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;text-align:right;line-height:1.3}
+
+.label{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.label:first-child{margin-top:4px}
+section[data-tab]{display:block}
+
+/* scelte */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-inline:-16px;padding-inline:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-weight:600;font-size:15px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cuts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cut{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;min-width:0}
+.cut b{display:block;font-size:15px;line-height:1.2}
+.cut small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.cut[aria-pressed="true"]{border-color:var(--ember);box-shadow:inset 0 0 0 1px var(--ember);background:var(--ember-soft)}
+
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px 10px;min-width:0}
+.field label{display:block;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.stepper{display:flex;align-items:center;gap:6px;margin-top:4px}
+.stepper button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--sunk);font-size:20px;font-weight:600;line-height:1;flex:0 0 auto}
+.stepper input{flex:1;min-width:0;width:100%;text-align:center;border:0;background:transparent;font-family:var(--f-mono);font-size:20px;font-weight:700;padding:4px 0}
+.stepper .u{font-size:13px;color:var(--muted);flex:0 0 auto}
+
+.seg{display:flex;background:var(--sunk);border-radius:12px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{flex:1 1 0;min-width:72px;border:0;background:transparent;border-radius:9px;padding:9px 6px;font-weight:600;font-size:14px;line-height:1.15}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.seg button i{display:block;font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}
+.fixed{background:var(--sunk);border-radius:12px;padding:10px 12px;font-size:14px;color:var(--muted)}
+.check{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:var(--muted)}
+.check input{width:20px;height:20px;accent-color:var(--ember)}
+
+/* risultato */
+.result{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.res-head{padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+.res-head h2{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.res-head p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.stat{padding:12px 16px;min-width:0}
+.stat:nth-child(odd){border-right:1px solid var(--line)}
+.stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+.stat small{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.stat strong{display:block;font-family:var(--f-mono);font-size:20px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat em{font-style:normal;font-size:12.5px;color:var(--muted)}
+.thermo{padding:12px 16px 14px;border-bottom:1px solid var(--line)}
+.thermo .bar{position:relative;height:10px;border-radius:99px;background:linear-gradient(90deg,var(--z-ind),var(--z-media) 45%,var(--z-ir));margin:10px 0 6px}
+.thermo .mk{position:absolute;top:-5px;width:4px;height:20px;border-radius:2px;background:var(--ink);transform:translateX(-2px)}
+.thermo .mk.pull{background:var(--surface);border:2px solid var(--ink);width:8px;transform:translateX(-4px)}
+.thermo .scale{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.thermo p{margin:0;font-size:13.5px}
+
+.steps{list-style:none;margin:0;padding:6px 0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:10px 16px;counter-increment:s}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-weight:700;font-size:13px;color:var(--muted);padding-top:2px}
+.steps .t{font-size:15px;line-height:1.3;min-width:0}
+.steps .d{font-family:var(--f-mono);font-weight:700;font-size:14px;white-space:nowrap;padding-top:1px}
+.steps .pr{display:block;font-size:12.5px;color:var(--ember);font-weight:600;margin-top:3px}
+.zp{--zc:var(--z-prep);display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--zc);margin-bottom:3px}
+.zp::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--zc)}
+.z-ir{--zc:var(--z-ir)}.z-alta{--zc:var(--z-alta)}.z-media{--zc:var(--z-media)}.z-ind{--zc:var(--z-ind)}.z-rest{--zc:var(--z-rest)}.z-prep{--zc:var(--z-prep)}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;font-weight:700;font-size:15px;text-align:center}
+.btn.primary{background:var(--ember);color:var(--ember-ink);border-color:var(--ember);grid-column:1/-1;font-size:17px;padding:15px}
+.btn.ghost{background:transparent}
+.btn.small{padding:8px 12px;font-size:14px}
+.btn:active{transform:translateY(1px)}
+
+.panel{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.panel h3{font-size:15px;margin-bottom:6px}
+.panel ul{margin:0;padding-left:18px}
+.panel li{margin:4px 0;font-size:14.5px}
+.mar{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.mar:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.mar b{font-size:14.5px}
+.mar p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.mar .tm{font-family:var(--f-mono);font-size:12px;color:var(--ember);font-weight:700}
+textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px 10px;font-size:15px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px 10px;font-size:15px}
+.muted{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+
+/* grigliata */
+.items{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.item b{display:block;font-size:15px}
+.item small{color:var(--muted);font-size:13px}
+.item .qty{display:flex;align-items:center;gap:4px}
+.item .qty button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font-weight:700}
+.item .qty span{font-family:var(--f-mono);min-width:26px;text-align:center;font-weight:700}
+.item .x{border:0;background:transparent;color:var(--muted);font-size:13px;padding:4px 0 0;text-decoration:underline}
+.banner{background:var(--ember-soft);border-radius:12px;padding:10px 12px;font-size:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.plan{list-style:none;margin:0;padding:0}
+.plan li{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14.5px}
+.plan li:first-child{border-top:0}
+.plan .at{font-family:var(--f-mono);font-weight:700;font-size:13px;padding-top:2px}
+.serve{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.serve input{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px 10px;font-family:var(--f-mono);font-size:16px}
+.big{font-family:var(--f-mono);font-weight:700;font-size:22px}
+
+/* quantità */
+.qtab{width:100%;border-collapse:collapse;font-size:14.5px}
+.qtab td{padding:8px 0;border-top:1px solid var(--line);vertical-align:top}
+.qtab tr:first-child td{border-top:0}
+.qtab td:nth-child(2){font-family:var(--f-mono);font-weight:700;text-align:right;white-space:nowrap;padding-left:10px}
+.qtab small{display:block;color:var(--muted);font-size:12.5px}
+.mix{display:grid;gap:10px}
+.mix div{display:grid;grid-template-columns:100px 1fr 44px;gap:10px;align-items:center;font-size:14px}
+.mix input[type=range]{width:100%;accent-color:var(--ember)}
+.mix output{font-family:var(--f-mono);font-size:13px;text-align:right}
+
+/* manuale */
+details.man{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:8px}
+details.man summary{list-style:none;padding:14px 16px;font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.01em;display:flex;justify-content:space-between;align-items:center}
+details.man summary::-webkit-details-marker{display:none}
+details.man summary::after{content:"+";font-family:var(--f-mono);font-size:20px;color:var(--muted)}
+details.man[open] summary::after{content:"–"}
+.mbody{padding:0 16px 14px;font-size:15px}
+.mbody p{margin:0 0 10px}
+.mbody ol,.mbody ul{padding-left:20px;margin:0 0 10px}
+.mbody li{margin:4px 0}
+.tw{overflow-x:auto;margin:0 -16px 12px;padding:0 16px}
+.tw table{border-collapse:collapse;font-size:13.5px;min-width:100%}
+.tw th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+.tw td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.tw td:first-child{font-weight:600}
+
+/* salvati */
+.fav{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.fav b{display:block}
+.fav small{color:var(--muted)}
+.empty{color:var(--muted);font-size:14.5px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:14px}
+
+/* barra schede */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(5,1fr)}
+.tabbar button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:11px;font-weight:600;color:var(--muted)}
+.tabbar svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-selected="true"]{color:var(--ember)}
+
+/* timer */
+#timer{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+#timer .tt{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#timer .tt b{font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;min-width:0}
+.tz{margin-top:18px;border-radius:18px;padding:18px 18px 20px;background:var(--surface);border:2px solid var(--zc,var(--line));--zc:var(--z-prep)}
+.tz .zp{font-size:13px}
+.tz h3{font-size:22px;line-height:1.2;margin-top:4px}
+.tz .pr{color:var(--ember);font-weight:700;margin-top:6px;font-size:15px}
+.count{font-family:var(--f-mono);font-weight:700;font-size:min(26vw,120px);line-height:1;text-align:center;margin:22px 0 6px;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.count-sub{text-align:center;color:var(--muted);font-size:14px}
+.prog{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden;margin:14px 0}
+.prog i{display:block;height:100%;background:var(--ember);width:0}
+.next{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px}
+.next small{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.next ul{list-style:none;margin:6px 0 0;padding:0;font-size:13.5px;color:var(--muted)}
+.next li{display:flex;gap:10px;padding:3px 0}
+.next li span{font-family:var(--f-mono);min-width:52px}
+.tctl{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:auto;padding-top:16px}
+.flash{animation:flash .9s ease 3}
+@keyframes flash{0%,100%{background:var(--bg)}50%{background:var(--ember-soft)}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+.lead{font-size:14.5px;color:var(--muted);margin:0 0 4px}
+/* diario e sincronizzazione */
+.outc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.outc button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 4px;font-weight:600;font-size:13.5px}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--sunk);color:var(--muted)}
+.tag.poco{color:var(--z-ind)}.tag.giusto{color:var(--ok)}.tag.troppo{color:var(--z-ir)}
+.hint{background:var(--ember-soft);border-radius:10px;padding:9px 11px;font-size:14px;margin-top:10px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sync{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted);margin-top:14px}
+.sync::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--sync,var(--muted))}
+.sync.on{--sync:var(--ok)}.sync.off{--sync:var(--warn)}
+.gout{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.gout:first-of-type{border-top:0;margin-top:4px}
+.gout b{font-size:14px}
+.gout .outc{margin-top:4px}
+.gout .outc button{padding:7px 4px;font-size:12.5px}
+.gout .done{font-size:13px;color:var(--ok);font-weight:600}
+.bz{display:grid;gap:12px}
+.bz figure{margin:0;display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}
+.bz svg{width:150px;height:auto;display:block}
+.bz figcaption{font-size:14px;min-width:0}
+.bz figcaption b{display:block;font-size:14.5px}
+.bz .b-off{fill:var(--sunk);stroke:var(--line)}
+.bz .b-max{fill:var(--z-ir)}.bz .b-mid{fill:var(--z-media)}
+.bz .grate{fill:none;stroke:var(--muted);stroke-width:1}
+.bz .meat{fill:var(--ink);opacity:.85}
+.bz text{font-family:var(--f-mono);font-size:8px;fill:var(--muted)}
+@media (max-width:360px){.bz figure{grid-template-columns:1fr}}
+#shopTxt{font-family:var(--f-mono);font-size:13px;min-height:150px;margin-top:10px}
+.shopbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.shopbtns a{text-decoration:none;color:inherit}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Griglia<br><span>Tahoe</span></div>
+    <div class="model">Broil Chef Tahoe<br>4 bruciatori + infrarosso</div>
+  </header>
+
+  <!-- CUOCI -->
+  <section data-tab="cuoci" id="tab-cuoci">
+    <div class="label">Carne</div>
+    <div class="chips" id="cats" role="group" aria-label="Tipo di carne"></div>
+    <div class="label">Taglio</div>
+    <div class="cuts" id="cuts"></div>
+    <div id="measures"></div>
+    <div id="doneWrap"></div>
+    <label class="check"><input type="checkbox" id="pre"> Includi il preriscaldo nel timer (10 min)</label>
+    <div id="result"></div>
+  </section>
+
+  <!-- GRIGLIATA -->
+  <section data-tab="grigliata" id="tab-grigliata" hidden>
+    <div class="label">Grigliata</div>
+    <p class="lead">Metti insieme tutto quello che cuoci. L'app calcola quando mettere sulla griglia ogni pezzo perché sia tutto pronto nello stesso momento.</p>
+    <div id="gBanner"></div>
+    <div class="items" id="gItems"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn small" id="gAdd">+ Aggiungi dal calcolatore</button>
+      <button class="btn small ghost" id="gClear">Svuota</button>
+    </div>
+    <div id="gPlan"></div>
+  </section>
+
+  <!-- QUANTITÀ -->
+  <section data-tab="quantita" id="tab-quantita" hidden>
+    <div class="label">Persone</div>
+    <div class="fields">
+      <div class="field"><label for="qA">Adulti</label><div class="stepper"><button data-q="qA" data-d="-1" aria-label="Meno">−</button><input id="qA" inputmode="numeric" value="10"><button data-q="qA" data-d="1" aria-label="Più">+</button></div></div>
+      <div class="field"><label for="qK">Bambini</label><div class="stepper"><button data-q="qK" data-d="-1" aria-label="Meno">−</button><input id="qK" inputmode="numeric" value="2"><button data-q="qK" data-d="1" aria-label="Più">+</button></div></div>
+    </div>
+    <div class="label">Appetito</div>
+    <div class="seg" id="qApp"></div>
+    <div class="label">Cosa cuoci (proporzioni)</div>
+    <div class="panel"><div class="mix" id="qMix"></div></div>
+    <div class="label">Da comprare</div>
+    <div class="panel" id="qOut"></div>
+    <div class="label">Lista della spesa</div>
+    <div class="panel">
+      <p class="lead" style="margin:0">Pronta da copiare o mandare su WhatsApp. Puoi modificarla prima di inviarla.</p>
+      <textarea id="shopTxt" aria-label="Lista della spesa"></textarea>
+      <div class="shopbtns"><button class="btn" id="shopCopy">Copia lista</button><a class="btn" id="shopWa" href="#" target="_blank" rel="noopener">Invia su WhatsApp</a></div>
+    </div>
+  </section>
+
+  <!-- MANUALE -->
+  <section data-tab="manuale" id="tab-manuale" hidden>
+    <div class="label">Manuale</div>
+    <div id="manual"></div>
+  </section>
+
+  <!-- SALVATI -->
+  <section data-tab="salvati" id="tab-salvati" hidden>
+    <div class="label">Preferiti</div>
+    <div id="favs"></div>
+    <div class="label">Note e correzioni</div>
+    <div id="notesList"></div>
+    <div class="label">Diario delle cotture</div>
+    <p class="lead">Dopo ogni cottura segna com'è venuta: dopo due risultati uguali l'app ti propone di correggere i tempi di quel taglio.</p>
+    <div id="diary"></div>
+    <div class="sync" id="sync">Salvataggio solo su questo telefono</div>
+    <div class="label">Backup</div>
+    <div class="panel">
+      <p class="lead" style="margin:0">Copia il backup e incollalo in una nota o mandalo a te stesso. Per ripristinarlo, incollalo qui sotto e tocca Ripristina.</p>
+      <div class="shopbtns"><button class="btn" id="bkCopy">Copia backup</button><button class="btn" id="bkRestore">Ripristina</button></div>
+      <textarea id="bkTxt" hidden placeholder="Incolla qui il backup, poi tocca di nuovo Ripristina" style="margin-top:10px"></textarea>
+    </div>
+  </section>
+</div>
+
+<nav class="tabbar" role="tablist" aria-label="Sezioni">
+  <button role="tab" data-go="cuoci" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.4 1.2-3.8 2.4-5 .3 1.8 1.1 2.7 2.1 3 0-3.2-.6-5.6.5-8z"/></svg>Cuoci</button>
+  <button role="tab" data-go="grigliata" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 7v11M11 7v11M15 7v11M19 7v11M8 3.5c0 1 1 1.5 1 2.5M13 3.5c0 1 1 1.5 1 2.5"/></svg>Grigliata</button>
+  <button role="tab" data-go="quantita" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9" r="2.5"/><path d="M3 19c0-3 2.2-5 5-5s5 2 5 5M14 19c0-2.4 1.2-4 3-4s3.5 1.6 3.5 4"/></svg>Quantità</button>
+  <button role="tab" data-go="manuale" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg>Manuale</button>
+  <button role="tab" data-go="salvati" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>Salvati</button>
+</nav>
+
+<div id="timer" hidden>
+  <div class="tt"><b id="tmTitle">Timer</b><button class="btn small ghost" id="tmClose">Chiudi</button></div>
+  <div class="tz" id="tmZone">
+    <div class="zp" id="tmZp">Zona</div>
+    <h3 id="tmNow">—</h3>
+    <div class="pr" id="tmProbe"></div>
+  </div>
+  <div class="count" id="tmCount">00:00</div>
+  <div class="count-sub" id="tmSub"></div>
+  <div class="prog"><i id="tmBar"></i></div>
+  <div class="next" id="tmNext"></div>
+  <div class="tctl">
+    <button class="btn" id="tmPause">Pausa</button>
+    <button class="btn" id="tmPlus">+1 min</button>
+    <button class="btn" id="tmSkip">Avanti ›</button>
+  </div>
+  <label class="check" style="justify-content:center"><input type="checkbox" id="tmVoice" checked> Avvisi a voce</label>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem('gt_'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('gt_'+k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- tempi ---------- */
+function fmt(s){s=Math.round(s);if(s<60)return s+' s';if(s<600){const m=Math.floor(s/60),r=s%60;return r?`${m} min ${r} s`:`${m} min`}
+  if(s<3600)return Math.round(s/60)+' min';const h=Math.floor(s/3600),m=Math.round((s%3600)/60);return m?`${h} h ${m} min`:`${h} h`}
+function clock(s){s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),r=s%60;const p=n=>String(n).padStart(2,'0');return h?`${h}:${p(m)}:${p(r)}`:`${p(m)}:${p(r)}`}
+
+/* ---------- zone del Tahoe ---------- */
+const ZONES={prep:{l:'Preriscaldo',c:'z-prep'},ir:{l:'Infrarosso laterale',c:'z-ir'},alta:{l:'Diretta alta',c:'z-alta'},media:{l:'Diretta media',c:'z-media'},indiretta:{l:'Indiretta',c:'z-ind'},riposo:{l:'Riposo',c:'z-rest'}};
+/* come impostare i bruciatori per ogni zona: 1–4 principali, 5 = infrarosso laterale */
+const ZSET={
+  prep:{st:['max','max','max','max','off'],meat:[],d:'Tutti e 4 i bruciatori al massimo, coperchio chiuso per 10–15 min, finché il termometro del coperchio segna 250–300 °C.'},
+  ir:{st:['off','off','off','off','max'],meat:[4],d:'Bruciatore laterale al massimo, acceso 5 min prima. La carne va sulla griglia sopra la ceramica rovente: 60–90 s per lato, senza mai allontanarsi.'},
+  alta:{st:['max','max','off','off','off'],meat:[0,1],d:'Bruciatori 1 e 2 al massimo, carne sopra di loro. 3 e 4 spenti: è la zona dove spostare la carne se fa fiammate.'},
+  media:{st:['mid','mid','off','off','off'],meat:[0,1],d:'Bruciatori 1 e 2 a metà, carne sopra di loro, coperchio chiuso. Il coperchio sta sui 180–220 °C.'},
+  indiretta:{st:['mid','mid','off','off','off'],meat:[2,3],d:'Bruciatori 1 e 2 accesi, 3 e 4 spenti. La carne va sopra quelli spenti e il coperchio resta chiuso: regola 1 e 2 finché il termometro segna la temperatura indicata.'}
+};
+function burners(z,alt){
+  const c=alt||ZSET[z];if(!c)return'';const W=24,G=3;let s='';
+  for(let i=0;i<4;i++){const x=6+i*(W+G);s+=`<rect x="${x}" y="14" width="${W}" height="40" rx="3" class="b-${c.st[i]}"/><text x="${x+W/2}" y="64" text-anchor="middle">${i+1}</text>`}
+  s+=`<rect x="120" y="14" width="26" height="40" rx="3" class="b-${c.st[4]}"/><text x="133" y="64" text-anchor="middle">IR</text>`;
+  s+=`<rect x="3" y="10" width="111" height="48" rx="5" class="grate"/><rect x="117" y="10" width="32" height="48" rx="5" class="grate"/>`;
+  c.meat.forEach(i=>{const x=i===4?124:6+i*(W+G)+3;s+=`<rect x="${x}" y="2" width="${i===4?18:W-6}" height="9" rx="4" class="meat"/>`});
+  return`<svg viewBox="0 0 150 70" role="img" aria-label="Schema bruciatori: ${ZONES[z]?ZONES[z].l:''}">${s}</svg>`;
+}
+function zoneFig(z,title,desc,alt){return`<figure>${burners(z,alt)}<figcaption><b>${title||ZONES[z].l}</b>${desc||ZSET[z].d}</figcaption></figure>`}
+const KW={prep:13.6,ir:3.5,alta:6.8,media:4,indiretta:3.4,riposo:0};
+
+/* ---------- gradi di cottura ---------- */
+const DN={
+  manzo:[{id:'sangue',l:'Al sangue',pull:50,fin:52},{id:'ms',l:'Media-al sangue',pull:54,fin:56},{id:'media',l:'Media',pull:57,fin:60},{id:'ben',l:'Ben cotta',pull:65,fin:68}],
+  agnello:[{id:'ms',l:'Rosata',pull:55,fin:57},{id:'media',l:'Media',pull:59,fin:61},{id:'ben',l:'Ben cotta',pull:65,fin:68}],
+  maiale:[{id:'rosato',l:'Rosato',pull:62,fin:64},{id:'cotto',l:'Ben cotto',pull:67,fin:70}],
+  pesce:[{id:'morbido',l:'Morbido',pull:52,fin:55},{id:'cotto',l:'Ben cotto',pull:58,fin:60}],
+  tonno:[{id:'sangue',l:'Scottato',pull:40,fin:45},{id:'rosato',l:'Rosato',pull:48,fin:50},{id:'cotto',l:'Cotto',pull:55,fin:58}]
+};
+const DEF_DN={manzo:'ms',agnello:'ms',maiale:'rosato',pesce:'morbido',tonno:'rosato'};
+const fac=pull=>Math.pow((pull-20)/34,1.2);
+
+/* ---------- mattoncini dei passaggi ---------- */
+const st=(z,t,s,o)=>Object.assign({z,t,s:Math.max(15,Math.round(s/5)*5)},o||{});
+const two=(z,l,s)=>[st(z,l+' · lato 1',s),st(z,'Gira · lato 2',s,{flip:true})];
+const four=(z,l,s)=>[st(z,l+' · lato 1',s),st(z,'Gira · lato 2',s,{flip:true}),st(z,'Gira · lato 3',s,{flip:true}),st(z,'Gira · lato 4',s,{flip:true})];
+const rot=(z,l,total,n)=>{const a=[];for(let i=0;i<n;i++)a.push(st(z,i?`Gira (${i+1}/${n})`:l,total/n,i?{flip:true}:{}));return a};
+const rest=m=>st('riposo','Togli dal fuoco e fai riposare (coperto con alluminio)',m*60);
+
+function steak(p,o){
+  const t=p.t,f=p.f,s=[];let lid;
+  const mode=o.mode||(t<=(o.max||2.5)?'direct':o.thick);
+  const z1=o.z1||'ir';
+  if(mode==='direct'){
+    const total=(o.c||1.32)*Math.pow(t,1.6)*f*60;
+    let sear=o.sear||(t<1.5?60:80);if(2*sear>total)sear=Math.max(40,total/2);
+    s.push(...two(z1,z1==='ir'?'Infrarosso al massimo':'Diretta alta',sear));
+    if(o.fatEdge&&z1==='ir')s.push(st('ir','Bordo di grasso sull\'infrarosso',45));
+    const rem=total-2*sear;
+    if(rem>=40)s.push(...two('media','Diretta media, coperchio chiuso',rem/2));
+    lid=rem>=40?'200–220 °C':'Infrarosso al massimo';
+  }else if(mode==='sear'){
+    if(o.four)s.push(...four('ir','Infrarosso, tutti i lati',o.searS||55));
+    else s.push(...two('ir','Infrarosso al massimo',o.searS||110));
+    if(o.edges)s.push(st('ir','Scotta il bordo di grasso in piedi',60));
+    s.push(st('indiretta','Indiretta, coperchio chiuso a 200–220 °C'+(o.bone?', in piedi sull\'osso':''),(o.k||.85)*t*t*f*60,{probe:p.pull}));
+    lid='200–220 °C';
+  }else{
+    s.push(st('indiretta','Indiretta, coperchio chiuso a 160–180 °C',(o.kr||1.6)*t*t*f*60,{probe:p.pull-8}));
+    s.push(...two('ir','Infrarosso al massimo per la crosta',60));
+    if(o.fatEdge||o.edges)s.push(st('ir','Bordo di grasso sull\'infrarosso',45));
+    lid='160–180 °C, poi infrarosso';
+  }
+  s.push(rest(t<=2.5?5:8));
+  return{s,lid,mode};
+}
+function roast(p,o){
+  const kg=p.w/1000,f=o.noF?1:p.f,s=[];
+  if(o.pre)s.push(...o.pre(p));
+  s.push(st('indiretta',o.label||`Indiretta, coperchio chiuso a ${o.lid}`,(o.a+o.b*kg)*f*60,o.noProbe?{}:{probe:o.probe!=null?o.probe(p):p.pull}));
+  if(o.post)s.push(...o.post(p));
+  s.push(rest(o.rest));
+  return{s,lid:o.lid};
+}
+const done=(s,lid)=>({s,lid});
+const R=(a,b,c,d)=>[a,b,c,d];
+
+/* ---------- marinature e condimenti ---------- */
+const MAR={
+  sale:{n:'Solo sale grosso e pepe',i:'Sale grosso 40 minuti prima o subito prima di cuocere; pepe macinato fresco e sale in fiocchi durante il riposo.',t:'—'},
+  erbe:{n:'Olio, aglio ed erbe',i:'Olio extravergine, aglio schiacciato, rosmarino, timo, pepe nero. Niente sale nella marinata.',t:'2–12 h'},
+  agnello:{n:'Agnello alla siciliana',i:'Olio, succo e scorza di limone, aglio, origano secco, qualche foglia di menta, pepe.',t:'4–12 h'},
+  salmoriglio:{n:'Salmoriglio (condimento)',i:'Emulsiona 100 ml di olio con il succo di 1 limone e 2 cucchiai di acqua calda; aggiungi origano, aglio tritato, prezzemolo, sale. Si spennella a fine cottura.',t:'A fine cottura'},
+  pollo:{n:'Pollo al limone e paprika',i:'Olio, succo di limone, aglio, paprika dolce, rosmarino, pepe.',t:'2–6 h'},
+  salamoia:{n:'Salamoia al 5%',i:'50 g di sale per litro d\'acqua (più 20 g di zucchero, se vuoi). Sciacqua e asciuga bene prima di cuocere.',t:'1–2 h pezzi, 6–8 h interi'},
+  bbq:{n:'Rub BBQ per costine',i:'2 parti paprika affumicata, 2 zucchero di canna, 1 sale, 1 aglio in polvere, 1 cipolla in polvere, ½ pepe. Spalma e lascia in frigo.',t:'Da 2 h a una notte'},
+  senape:{n:'Senape e miele',i:'Senape, un cucchiaio di miele, aglio, rosmarino, olio. Il miele brucia: niente infrarosso.',t:'1–4 h'},
+  chimichurri:{n:'Chimichurri (condimento)',i:'Prezzemolo tritato, aglio, origano, peperoncino, aceto di vino rosso, olio, sale. Si serve sulla carne tagliata.',t:'A fine cottura'},
+  pesce:{n:'Olio, limone e prezzemolo',i:'Olio, scorza di limone, aglio, prezzemolo, pepe. Il succo di limone "cuoce" il pesce: aggiungilo alla fine.',t:'20–30 min'},
+  tonno:{n:'Crosta di sesamo',i:'Spennella con olio e un filo di salsa di soia, passa nel sesamo, sale a fine cottura.',t:'10 min'},
+  finocchietto:{n:'Finocchietto e arancia',i:'Spennella a fine cottura con olio, semi di finocchietto pestati e un po\' di scorza d\'arancia.',t:'A fine cottura'},
+  verdure:{n:'Condimento siciliano per verdure',i:'Olio, aglio a fettine, menta fresca, un goccio di aceto, sale. Condisci le verdure ancora calde.',t:'Dopo la cottura'},
+  carciofi:{n:'Ripieno per carciofi',i:'Aglio tritato, prezzemolo, sale, pepe e abbondante olio infilati tra le foglie aperte.',t:'Prima della cottura'},
+  formaggio:{n:'Origano, pepe e miele',i:'Appena tolto: origano secco, pepe nero e, se ti piace, un filo di miele o qualche goccia di limone.',t:'A fine cottura'},
+  frutta:{n:'Zucchero, cannella e menta',i:'Spolvera di zucchero di canna e cannella negli ultimi minuti; servi con gelato o ricotta e menta fresca.',t:'A fine cottura'},
+  bruschetta:{n:'Bruschetta classica',i:'Strofina l\'aglio sul pane caldo, olio, sale; sopra pomodoro a cubetti e basilico.',t:'Subito'}
+};
+
+/* ---------- tagli ---------- */
+const CATS=[{id:'manzo',l:'Manzo e vitello'},{id:'agnello',l:'Agnello'},{id:'maiale',l:'Maiale'},{id:'pollo',l:'Pollo e tacchino'},{id:'macinati',l:'Macinati'},{id:'pesce',l:'Pesce'},{id:'verdure',l:'Verdure'},{id:'formaggi',l:'Formaggi'},{id:'frutta',l:'Pane e frutta'}];
+const NOCOLD=new Set(['verdure','formaggi','frutta']);
+const T_SAL=['Mai bucarla e mai a fuoco alto: perde il grasso e si spacca.','Coperchio chiuso: cuoce dentro senza bruciare fuori.'];
+const CUTS=[
+/* MANZO */
+{id:'fiorentina',cat:'manzo',n:'Fiorentina / T-bone',d:'Con osso, alta',in:{t:R(3,7,4.5,.5),w:R(700,2200,1200,50)},dn:'manzo',
+ calc:p=>steak(p,{thick:'sear',bone:true,edges:true}),
+ tips:['Toglila dal frigo almeno 1 ora prima: il cuore freddo resta crudo.','Nell\'indiretta tienila in piedi sull\'osso: cuoce più uniforme.','Al taglio stacca filetto e controfiletto dall\'osso, poi affetta.'],mar:['sale','chimichurri']},
+{id:'costata',cat:'manzo',n:'Costata',d:'Con o senza osso',in:{t:R(2,6,4,.5),w:R(400,1500,900,50)},dn:'manzo',
+ calc:p=>steak(p,{thick:'reverse',fatEdge:true}),
+ tips:['Sopra i 2,5 cm uso la cottura inversa: prima piano in indiretta, poi crosta sull\'infrarosso.','Il grasso esterno va scottato in piedi: diventa croccante.'],mar:['sale','erbe']},
+{id:'tomahawk',cat:'manzo',n:'Tomahawk',d:'Costata con osso lungo',in:{t:R(4,7,5,.5),w:R(900,2200,1300,50)},dn:'manzo',
+ calc:p=>steak(p,{thick:'reverse',kr:1.7,fatEdge:true}),
+ tips:['Avvolgi l\'osso nell\'alluminio: altrimenti annerisce.','Tienila 1 ora a temperatura ambiente.'],mar:['sale','chimichurri']},
+{id:'entrecote',cat:'manzo',n:'Entrecôte / Ribeye',d:'Marezzata, senza osso',in:{t:R(1.5,4,2.5,.5),w:R(200,500,300,25)},dn:'manzo',
+ calc:p=>steak(p,{thick:'reverse'}),tips:['Ha molto grasso interno: tollera bene anche la media.'],mar:['sale','erbe']},
+{id:'controfiletto',cat:'manzo',n:'Controfiletto / Roastbeef',d:'Bistecca senza osso',in:{t:R(1.5,4,2.5,.5),w:R(200,500,300,25)},dn:'manzo',
+ calc:p=>steak(p,{thick:'reverse'}),tips:['Più magro della costata: non andare oltre la media.'],mar:['sale','erbe']},
+{id:'filetto',cat:'manzo',n:'Filetto',d:'Medaglione alto',in:{t:R(2.5,6,4,.5),w:R(120,350,200,10)},dn:'manzo',
+ calc:p=>steak(p,{thick:'sear',k:.65,four:true,searS:55,max:2.5}),
+ tips:['È magrissimo: oltre la media diventa asciutto.','Lega il medaglione con lo spago se è sfilacciato.'],mar:['sale','erbe']},
+{id:'tagliata',cat:'manzo',n:'Tagliata',d:'Controfiletto o scamone',in:{t:R(2,4,3,.5),w:R(250,900,500,50)},dn:'manzo',
+ calc:p=>steak(p,{thick:'reverse'}),tips:['Dopo il riposo taglia a fette di 1 cm, contro le fibre.','Servi su rucola con scaglie di grana e un filo d\'olio.'],mar:['sale','erbe']},
+{id:'picanha',cat:'manzo',n:'Picanha a fette',d:'Codone, con cappello di grasso',in:{t:R(2,4,3,.5),w:R(200,450,300,25)},dn:'manzo',
+ calc:p=>steak(p,{mode:'direct',z1:'alta',sear:120}),tips:['Il grasso verso il fuoco per primo, ma niente infrarosso: fa fiammate.','Incidi il grasso a rombi senza toccare la carne.'],mar:['sale','chimichurri']},
+{id:'picanhaint',cat:'manzo',n:'Picanha intera',d:'Pezzo unico',in:{w:R(800,1700,1200,50)},dn:'manzo',
+ calc:p=>roast(p,{lid:'180 °C',a:15,b:20,probe:p=>p.pull-5,post:()=>two('ir','Crosta sull\'infrarosso',60),rest:10}),
+ tips:['Grasso verso l\'alto in indiretta: si scioglie e bagna la carne.','A fette di 1,5 cm contro le fibre.'],mar:['sale','chimichurri']},
+{id:'bavetta',cat:'manzo',n:'Bavetta / Flank / Skirt',d:'Sottile, fibrosa',in:{t:R(1,2.5,1.5,.5),w:R(300,900,500,50)},dn:'manzo',
+ calc:p=>steak(p,{mode:'direct',c:1.1,sear:75}),tips:['Cottura velocissima e calore massimo.','Taglia sottile e contro le fibre, altrimenti è gommosa.'],mar:['erbe','chimichurri']},
+{id:'costvitello',cat:'manzo',n:'Costoletta di vitello',d:'Con osso',in:{t:R(1.5,4,2.5,.5),w:R(200,600,350,25)},dn:'manzo',
+ calc:p=>steak(p,{thick:'reverse'}),tips:['Il vitello è magro: meglio media-al sangue o media.','Spennellala d\'olio e rosmarino durante la cottura.'],mar:['erbe','salmoriglio']},
+{id:'fettinevitello',cat:'manzo',n:'Fettine di vitello',d:'Sottili',in:{t:R(.5,1,.5,.5)},fix:{none:true,label:'Pochi secondi: appena cambiano colore sono pronte.'},
+ calc:p=>done(two('alta','Diretta alta',60*p.t/.5),'280 °C'),tips:['Ungile e salale solo dopo la cottura.','Battile a spessore uniforme.'],mar:['erbe','salmoriglio']},
+{id:'spiedmanzo',cat:'manzo',n:'Spiedini di manzo',d:'Cubi da 3 cm',in:{n:R(1,40,8,1)},dn:'manzo',
+ calc:p=>done([...rot('alta','Diretta alta',8*p.f*60,4),rest(3)],'250 °C'),tips:['Alterna la carne con cipolla e peperone.','Spiedi di legno: bagnali 30 min in acqua.'],mar:['erbe']},
+/* AGNELLO */
+{id:'costolette',cat:'agnello',n:'Costolette',d:'Singole, a scottadito',in:{t:R(1,3,1.5,.5),n:R(1,60,12,1)},dn:'agnello',
+ calc:p=>{const tot=1.8*Math.pow(p.t,1.5)*p.f*60,sear=Math.min(75,tot/2),s=[...two('ir','Infrarosso al massimo',sear)];if(tot-2*sear>=40)s.push(...two('media','Diretta media',(tot-2*sear)/2));s.push(rest(3));return done(s,'Infrarosso + 200 °C')},
+ tips:['Togli il grasso in eccesso dal bordo: in fiamma fa fumo amaro.','Si mangiano con le mani, appena fatte.'],mar:['agnello','salmoriglio']},
+{id:'carre',cat:'agnello',n:'Carré / costolette doppie',d:'Pezzo con più ossa',in:{w:R(300,1100,600,50)},dn:'agnello',
+ calc:p=>roast(p,{lid:'200 °C',label:'Indiretta a 200 °C, ossa avvolte nell\'alluminio',a:8,b:10,pre:()=>two('ir','Infrarosso per la crosta',60),rest:6}),
+ tips:['Proteggi le ossa scoperte con l\'alluminio.','Taglia tra un osso e l\'altro dopo il riposo.'],mar:['agnello','erbe']},
+{id:'spalladis',cat:'agnello',n:'Spalla disossata',d:'Aperta a libro',in:{w:R(700,2000,1200,50)},dn:'agnello',
+ calc:p=>roast(p,{lid:'180 °C',a:10,b:12,pre:()=>two('media','Diretta media',240),rest:10}),tips:['Aprila a spessore uniforme: cuoce tutta insieme.'],mar:['agnello']},
+{id:'spallalenta',cat:'agnello',n:'Spalla con osso, lenta',d:'Si sfilaccia',nocold:true,in:{w:R(1200,2800,1800,100)},fix:{pull:88,fin:90},
+ calc:p=>roast(p,{lid:'160–170 °C',a:60,b:60,noF:true,rest:15}),tips:['Mettila in una teglia con un bicchiere di vino bianco e aglio.','Avvolgila nell\'alluminio quando ha preso colore.'],mar:['agnello']},
+{id:'cosciotto',cat:'agnello',n:'Cosciotto intero',d:'Arrosto',in:{w:R(1400,3200,2200,100)},dn:'agnello',
+ calc:p=>roast(p,{lid:'170–180 °C',a:15,b:40,probe:p=>p.pull-3,post:()=>two('alta','Diretta alta per dorare',180),rest:15}),
+ tips:['Incidi e infila spicchi d\'aglio e rosmarino.','Sonda nel punto più spesso, lontano dall\'osso.'],mar:['agnello','erbe']},
+{id:'cosciottofette',cat:'agnello',n:'Cosciotto a fette',d:'Fette con osso',in:{t:R(1,2.5,1.5,.5)},dn:'agnello',
+ calc:p=>done([...two('alta','Diretta alta',3*Math.pow(p.t/1.5,1.3)*p.f*60),rest(3)],'250 °C'),tips:['Marinate sono molto più tenere.'],mar:['agnello']},
+{id:'arrosticini',cat:'agnello',n:'Arrosticini',d:'Spiedini piccoli',in:{n:R(5,200,40,5)},fix:{none:true,label:'Cottura a vista: dorati fuori, succosi dentro.'},
+ calc:()=>done([...rot('alta','Diretta alta',5*60,4),rest(1)],'250–280 °C'),tips:['Sale fino solo a fine cottura.','Girali spesso e servili subito.'],mar:['sale']},
+/* MAIALE */
+{id:'salsiccia',cat:'maiale',n:'Salsiccia',d:'A pezzi, budello',in:{t:R(2,4,3,.5),n:R(1,60,10,1)},tlabel:'Diametro',fix:{pull:70,fin:71},
+ calc:p=>done([...rot('media','Diretta media, coperchio chiuso',4.5*Math.pow(p.t,1.1)*60,4),rest(2)],'180–200 °C'),tips:T_SAL,mar:['finocchietto']},
+{id:'salsicciaruota',cat:'maiale',n:'Salsiccia al finocchietto a ruota',d:'Siciliana, a spirale',in:{w:R(300,1500,600,50)},fix:{pull:70,fin:71},
+ calc:p=>done([...two('media','Diretta media, coperchio chiuso',(5+4*p.w/1000)*60),rest(3)],'180–200 °C'),
+ tips:['Fissa la spirale con due spiedi a croce: la giri intera senza romperla.',...T_SAL],mar:['finocchietto']},
+{id:'braciola',cat:'maiale',n:'Braciola / costoletta',d:'Con osso',in:{t:R(1,4,2,.5)},dn:'maiale',
+ calc:p=>{const tot=2.8*Math.pow(p.t,1.5)*p.f*60,a=Math.min(120,tot/2),s=[...two('alta','Diretta alta',a)];if(tot-2*a>=40)s.push(...two('media','Diretta media, coperchio chiuso',(tot-2*a)/2));s.push(rest(4));return done(s,'Alta, poi 200 °C')},
+ tips:['Incidi il grasso del bordo ogni 3 cm: non si arriccia.','Sotto 1,5 cm solo fuoco alto e pochi minuti.'],mar:['senape','erbe']},
+{id:'nodino',cat:'maiale',n:'Nodino / lonza a fette',d:'Senza osso o con osso piccolo',in:{t:R(1,4,2.5,.5)},dn:'maiale',
+ calc:p=>{const tot=2.5*Math.pow(p.t,1.5)*p.f*60,a=Math.min(120,tot/2),s=[...two('alta','Diretta alta',a)];if(tot-2*a>=40)s.push(...two('media','Diretta media, coperchio chiuso',(tot-2*a)/2));s.push(rest(4));return done(s,'Alta, poi 200 °C')},
+ tips:['La lonza è magra: con la salamoia resta molto più succosa.'],mar:['salamoia','senape']},
+{id:'capocollo',cat:'maiale',n:'Capocollo a fette',d:'Fette marezzate',in:{t:R(1,2.5,1.5,.5)},dn:'maiale',
+ calc:p=>done([...two('alta','Diretta alta',2.2*Math.pow(p.t,.8)*p.f*60),rest(2)],'250 °C'),tips:['È grasso: tieni libera una zona spenta per le fiammate.'],mar:['erbe']},
+{id:'pancetta',cat:'maiale',n:'Pancetta a fette',d:'Fresca',in:{t:R(.5,2,1,.5)},fix:{none:true,label:'Cottura a vista: dorata e croccante.'},
+ calc:p=>done([...two('media','Diretta media',3.5*p.t*60),...two('alta','Diretta alta per croccare',45),rest(1)],'200 °C, poi alta'),tips:['Fiammate frequenti: spostala in zona spenta per qualche secondo.'],mar:['sale']},
+{id:'filettomaiale',cat:'maiale',n:'Filetto di maiale',d:'Intero',in:{w:R(250,800,450,50)},dn:'maiale',
+ calc:p=>roast(p,{lid:'180–200 °C',a:5,b:15,pre:()=>four('media','Diretta media, tutti i lati',120),rest:5}),tips:['Togli la pellicina argentata prima di cuocere.'],mar:['senape','salamoia']},
+{id:'arista',cat:'maiale',n:'Arista / lonza intera',d:'Arrosto',in:{w:R(800,2500,1500,100)},dn:'maiale',
+ calc:p=>roast(p,{lid:'170–180 °C',a:15,b:35,pre:()=>two('alta','Diretta alta per rosolare',180),rest:10}),tips:['Con la salamoia (6–8 h) diventa un\'altra cosa.'],mar:['salamoia','erbe']},
+{id:'costine',cat:'maiale',n:'Costine, lente',d:'Puntine, metodo 2-1-15',nocold:true,in:{w:R(800,2500,1200,100)},fix:{none:true,label:'Pronte quando l\'osso si sfila e la carne si piega.'},
+ calc:()=>done([st('indiretta','Indiretta a 140–150 °C, ciotola d\'acqua nella zona spenta',120*60),st('indiretta','Avvolgi nell\'alluminio con un goccio di succo di mela',60*60),st('indiretta','Scarta, spennella la salsa BBQ, coperchio chiuso',15*60),rest(10)],'140–150 °C'),
+ tips:['Togli la membrana dal lato delle ossa.','La salsa solo alla fine: lo zucchero brucia.'],mar:['bbq']},
+{id:'spareveloci',cat:'maiale',n:'Costine veloci',d:'In 2 ore',in:{w:R(800,2500,1200,100)},fix:{none:true,label:'Pronte quando la carne si stacca facilmente dall\'osso.'},
+ calc:()=>done([st('indiretta','Indiretta a 170 °C, coperchio chiuso',90*60),...two('media','Diretta media con la salsa',240),rest(5)],'170 °C'),tips:['Meno morbide delle lente, ma pronte in metà tempo.'],mar:['bbq']},
+/* POLLO */
+{id:'petto',cat:'pollo',n:'Petto intero',d:'Mezzo petto',in:{w:R(180,450,280,10)},fix:{pull:72,fin:74},
+ calc:p=>roast(p,{lid:'180–200 °C',a:6,b:20,noF:true,pre:()=>two('media','Diretta media',180),rest:5}),tips:['Batti la parte più spessa per uniformarla.','Con la salamoia (1 ora) resta succoso.'],mar:['salamoia','pollo']},
+{id:'pettofette',cat:'pollo',n:'Petto a fette',d:'Fettine',in:{t:R(.5,2,1,.5)},fix:{pull:72,fin:74},
+ calc:p=>done([...two('alta','Diretta alta',150*Math.pow(p.t,.9)),rest(2)],'250 °C'),tips:['Fette uniformi: cuociono insieme.'],mar:['pollo']},
+{id:'cosce',cat:'pollo',n:'Cosce e sovracosce',d:'Con osso e pelle',in:{w:R(150,400,250,10),n:R(1,40,6,1)},fix:{pull:80,fin:82},
+ calc:p=>roast(p,{lid:'190–200 °C',a:20,b:40,noF:true,post:()=>two('media','Diretta media, pelle croccante',240),rest:5}),tips:['Le cosce a 80–85 °C sono più tenere, non più secche.'],mar:['pollo','salamoia']},
+{id:'alette',cat:'pollo',n:'Alette',d:'Intere o divise',in:{n:R(4,80,20,2)},fix:{pull:78,fin:80},
+ calc:()=>done([st('indiretta','Indiretta a 200 °C, coperchio chiuso',18*60),st('indiretta','Gira, coperchio chiuso',18*60,{flip:true}),...two('alta','Diretta alta per la glassa',90),rest(3)],'200 °C'),tips:['Asciugale bene: la pelle diventa croccante.'],mar:['pollo','bbq']},
+{id:'polloaperto',cat:'pollo',n:'Pollo alla diavola',d:'Intero, aperto',in:{w:R(900,2500,1500,100)},fix:{pull:72,fin:74},
+ calc:p=>roast(p,{lid:'200 °C',label:'Indiretta a 200 °C, pelle in su, coperchio chiuso',a:25,b:18,noF:true,post:()=>[st('media','Pelle in giù sulla diretta media',240)],rest:10}),
+ tips:['Sonda nel petto (74 °C); la coscia deve arrivare a 82 °C.','Taglia la spina dorsale con le forbici e schiaccia il pollo.'],mar:['pollo','salamoia']},
+{id:'pollointero',cat:'pollo',n:'Pollo intero',d:'Arrosto',in:{w:R(900,2500,1500,100)},fix:{pull:72,fin:74},
+ calc:p=>roast(p,{lid:'180–190 °C',a:30,b:25,noF:true,rest:15}),tips:['Sonda nel petto, senza toccare l\'osso.','Mezzo limone e rosmarino nella cavità.'],mar:['salamoia','pollo']},
+{id:'spiedpollo',cat:'pollo',n:'Spiedini di pollo',d:'Cubi da 3 cm',in:{n:R(1,40,8,1)},fix:{pull:72,fin:74},
+ calc:()=>done([...rot('media','Diretta media',12*60,4),rest(2)],'200 °C'),tips:['Meglio la sovracoscia del petto: resta morbida.'],mar:['pollo']},
+{id:'salsicciapollo',cat:'pollo',n:'Salsiccia di pollo',d:'Più magra di quella di maiale',in:{n:R(1,60,10,1)},fix:{pull:72,fin:74},
+ calc:()=>done([...rot('media','Diretta media, coperchio chiuso',12*60,4),rest(2)],'180–200 °C'),tips:['È magra: non alzare il fuoco o si asciuga.','Mai bucarla.'],mar:['pollo']},
+{id:'tacchinofette',cat:'pollo',n:'Fesa di tacchino a fette',d:'Fettine',in:{t:R(.5,2,1,.5)},fix:{pull:72,fin:74},
+ calc:p=>done([...two('alta','Diretta alta',150*Math.pow(p.t,.9)),rest(2)],'250 °C'),tips:['Marinatura breve: è magrissima.'],mar:['pollo']},
+{id:'tacchinointero',cat:'pollo',n:'Fesa di tacchino intera',d:'Arrosto',in:{w:R(700,2000,1000,100)},fix:{pull:72,fin:74},
+ calc:p=>roast(p,{lid:'180 °C',a:20,b:40,noF:true,pre:()=>two('media','Diretta media',180),rest:10}),tips:['Legala con lo spago per una forma regolare.'],mar:['salamoia','erbe']},
+/* MACINATI */
+{id:'hamburger',cat:'macinati',n:'Hamburger',d:'Carne con il 20% di grasso',in:{t:R(1,3,2,.5),w:R(100,250,180,10),n:R(1,40,10,1)},fix:{pull:70,fin:71},
+ calc:p=>done([...two('alta','Diretta alta',2.6*Math.pow(p.t,1.4)*30),rest(2)],'250 °C'),
+ tips:['Fossetta al centro col pollice: non si gonfia.','Mai schiacciarlo sulla griglia.','Formaggio nell\'ultimo minuto a coperchio chiuso; panini tostati 30 s.'],mar:['sale']},
+{id:'smash',cat:'macinati',n:'Smash burger',d:'Su piastra in ghisa',in:{n:R(1,40,8,1)},fix:{pull:70,fin:71},
+ calc:()=>done([st('alta','Su piastra rovente: schiaccia subito la palla di carne',120),st('alta','Gira, formaggio sopra',60,{flip:true}),rest(1)],'Piastra rovente'),tips:['Serve una piastra in ghisa sulla griglia, preriscaldata 10 min.','Palline da 80–90 g.'],mar:['sale']},
+{id:'polpette',cat:'macinati',n:'Polpette / bombette',d:'Da 4–5 cm',in:{n:R(1,60,16,1)},fix:{pull:70,fin:71},
+ calc:()=>done([...rot('media','Diretta media, coperchio chiuso',11*60,4),rest(2)],'200 °C'),tips:['Ungile appena: non si attaccano.'],mar:['erbe']},
+{id:'spiedmisti',cat:'macinati',n:'Spiedini misti',d:'Con salsiccia',in:{n:R(1,40,10,1)},fix:{pull:70,fin:71},
+ calc:()=>done([...rot('media','Diretta media',11*60,4),rest(2)],'200 °C'),tips:['Pezzi della stessa misura: cuociono insieme.'],mar:['erbe']},
+{id:'involtini',cat:'macinati',n:'Involtini alla palermitana',d:'Con pangrattato',in:{n:R(1,40,12,1)},fix:{pull:70,fin:71},
+ calc:()=>done([...two('media','Diretta media',180),st('indiretta','Indiretta, coperchio chiuso a 180 °C',8*60),rest(2)],'180–200 °C'),tips:['Il pangrattato brucia: niente fuoco alto.','Alterna sugli spiedi con alloro e cipolla.'],mar:['erbe']},
+/* PESCE */
+{id:'spada',cat:'pesce',n:'Pesce spada a tranci',d:'Fette alte',in:{t:R(1,3,2,.5)},dn:'pesce',
+ calc:p=>done([...two('alta','Diretta alta, griglia ben unta',2.4*Math.pow(p.t,1.3)*p.f*30),rest(1)],'250 °C'),tips:['Ungi il pesce, non la griglia.','Spennella col salmoriglio appena tolto.'],mar:['salmoriglio','pesce']},
+{id:'tonno',cat:'pesce',n:'Tonno a tranci',d:'Fette alte',in:{t:R(1.5,4,2.5,.5)},dn:'tonno',
+ calc:p=>{const b={sangue:35,rosato:60,cotto:90}[p.did]||60,ps=b*Math.pow(p.t/2.5,.8),s=[...two('ir','Infrarosso al massimo',ps)];if(p.did==='cotto')s.push(...two('media','Diretta media',60));s.push(rest(1));return done(s,'Infrarosso')},
+ tips:['Il tonno cotto troppo diventa stoppaccioso: meglio rosato.'],mar:['tonno','salmoriglio']},
+{id:'salmone',cat:'pesce',n:'Salmone, filetto',d:'Con pelle',in:{t:R(2,4,3,.5)},dn:'pesce',
+ calc:p=>done([st('media','Pelle in giù, coperchio chiuso, non girarlo',3.2*p.t*p.f*60,{probe:p.pull}),rest(2)],'200 °C'),tips:['La pelle croccante si stacca da sola quando è pronta.'],mar:['pesce']},
+{id:'orata',cat:'pesce',n:'Orata / spigola intera',d:'Pulita',in:{w:R(250,1200,450,50)},fix:{pull:56,fin:58},
+ calc:p=>done([...two('media','Diretta media, pelle oliata',(4+6*p.w/1000)*60),rest(2)],'200–220 °C'),tips:['Due incisioni per lato e limone nella pancia.','Gira una volta sola, con due spatole.'],mar:['pesce','salmoriglio']},
+{id:'gamberoni',cat:'pesce',n:'Gamberoni',d:'Con il guscio',in:{n:R(2,80,16,2)},fix:{none:true,label:'Pronti quando sono rosa e opachi.'},
+ calc:()=>done(two('alta','Diretta alta',120),'250 °C'),tips:['Incidi il dorso e togli il filo nero.'],mar:['pesce']},
+{id:'calamari',cat:'pesce',n:'Calamari / totani',d:'Interi',in:{w:R(100,600,250,50)},fix:{none:true,label:'Pochi minuti: troppo cotti diventano gommosi.'},
+ calc:p=>done(two('alta','Diretta alta',(2+2*p.w/1000)*60),'250 °C'),tips:['Asciugali benissimo prima di cuocerli.'],mar:['salmoriglio']},
+{id:'polpo',cat:'pesce',n:'Polpo',d:'Già lessato',in:{n:R(1,10,1,1)},fix:{none:true,label:'Solo per abbrustolire: è già cotto.'},
+ calc:()=>done(two('alta','Diretta alta',180),'250 °C'),tips:['Lessalo prima 40–50 min, poi griglia i tentacoli.'],mar:['salmoriglio']},
+{id:'sarde',cat:'pesce',n:'Sarde',d:'Intere',in:{n:R(4,80,20,2)},fix:{none:true,label:'Pronte quando la pelle si arriccia.'},
+ calc:()=>done(two('alta','Diretta alta, nella griglia a cestello',100),'250 °C'),tips:['Senza cestello si rompono quando le giri.'],mar:['pesce']},
+{id:'spiedpesce',cat:'pesce',n:'Spiedini di pesce',d:'Spada, gamberi, calamari',in:{n:R(1,40,8,1)},fix:{none:true,label:'Cottura a vista.'},
+ calc:()=>done(rot('media','Diretta media',8*60,4),'200 °C'),tips:['Pezzi uguali e un filo d\'olio.'],mar:['salmoriglio']},
+/* VERDURE */
+{id:'melanzane',cat:'verdure',n:'Melanzane a fette',d:'Spesse 1 cm',in:{t:R(.5,2,1,.5)},fix:{none:true,label:'Morbide al centro, segnate fuori.'},
+ calc:p=>done(two('media','Diretta media',240*p.t),'200 °C'),tips:['Ungi la griglia, non le fette: assorbono olio.'],mar:['verdure']},
+{id:'zucchine',cat:'verdure',n:'Zucchine a fette',d:'Per lungo',in:{t:R(.5,1.5,.5,.5)},fix:{none:true,label:'Segnate fuori, ancora sode.'},
+ calc:p=>done(two('media','Diretta media',150+120*p.t),'200 °C'),tips:['Salale solo dopo, altrimenti buttano acqua.'],mar:['verdure']},
+{id:'peperoni',cat:'verdure',n:'Peperoni interi',d:'Da pelare',in:{n:R(1,20,4,1)},fix:{none:true,label:'Pelle nera e gonfia su tutti i lati.'},
+ calc:()=>done([...rot('alta','Diretta alta, interi',18*60,4),st('riposo','In un sacchetto chiuso 10 min, poi pela',600)],'250 °C'),tips:['Il sacchetto fa staccare la pelle da sola.'],mar:['verdure']},
+{id:'pomodori',cat:'verdure',n:'Pomodori a metà',d:'Ramati',in:{n:R(1,20,6,1)},fix:{none:true,label:'Morbidi, appena appassiti.'},
+ calc:()=>done([st('media','Taglio in su, con origano e olio, coperchio chiuso',360)],'200 °C'),tips:['Ottimi con pangrattato, aglio e prezzemolo sopra.'],mar:['verdure']},
+{id:'cipolle',cat:'verdure',n:'Cipolle a fette',d:'Rosse di Tropea o bianche',in:{t:R(1,2,1.5,.5)},fix:{none:true,label:'Morbide e caramellate.'},
+ calc:p=>done(two('media','Diretta media',300*p.t/1.5),'200 °C'),tips:['Infila uno stecchino orizzontale: gli anelli non si staccano.'],mar:['verdure']},
+{id:'funghi',cat:'verdure',n:'Funghi Portobello',d:'Cappelle intere',in:{n:R(1,20,6,1)},fix:{none:true,label:'Morbidi e succosi.'},
+ calc:()=>done(two('media','Diretta media',240),'200 °C'),tips:['Lamelle in su nel secondo lato, con aglio e prezzemolo.'],mar:['verdure']},
+{id:'pannocchie',cat:'verdure',n:'Pannocchie',d:'Senza foglie',in:{n:R(1,20,4,1)},fix:{none:true,label:'Chicchi dorati e teneri.'},
+ calc:()=>done(rot('media','Diretta media',16*60,4),'200 °C'),tips:['Burro e sale appena tolte.'],mar:['sale']},
+{id:'patate',cat:'verdure',n:'Patate a fette',d:'Già sbollentate 5 min',in:{t:R(.5,2,1,.5)},fix:{none:true,label:'Morbide dentro, dorate fuori.'},
+ calc:p=>done(two('media','Diretta media',300*p.t),'200 °C'),tips:['Crude non cuociono bene: sbollentale prima.'],mar:['erbe']},
+{id:'carciofi',cat:'verdure',n:'Carciofi alla brace',d:'Siciliani, ripieni',in:{n:R(1,20,6,1)},fix:{none:true,label:'Pronti quando le foglie interne si staccano facilmente.'},
+ calc:()=>done([st('indiretta','In piedi, ripieni d\'olio e aglio, coperchio chiuso a 200 °C',35*60),st('media','Diretta media per abbrustolire le foglie esterne',300)],'200 °C'),tips:['Batti i carciofi a testa in giù per aprire le foglie.','Togli le foglie esterne bruciate prima di servire.'],mar:['carciofi']},
+{id:'asparagi',cat:'verdure',n:'Asparagi',d:'Mazzetto',in:{n:R(1,10,1,1)},fix:{none:true,label:'Teneri ma ancora croccanti.'},
+ calc:()=>done(rot('alta','Diretta alta, di traverso sulla griglia',6*60,3),'250 °C'),tips:['Mettili di traverso: non cadono tra le barre.'],mar:['verdure']},
+/* FORMAGGI */
+{id:'provola',cat:'formaggi',n:'Provola',d:'A fette',in:{t:R(1,2,1.5,.5)},fix:{none:true,label:'Segnata fuori, morbida dentro, prima che coli.'},
+ calc:p=>done(two('alta','Diretta alta, griglia pulitissima e unta',75*p.t/1.5),'250–280 °C'),tips:['Usala fredda di frigo: tiene la forma.','Girala una volta sola, con una spatola larga.'],mar:['formaggio']},
+{id:'caciocavallo',cat:'formaggi',n:'Caciocavallo',d:'Fette spesse',in:{t:R(1,2,1.5,.5)},fix:{none:true,label:'Dorato fuori, appena filante.'},
+ calc:p=>done(two('alta','Diretta alta, griglia unta',90*p.t/1.5),'250–280 °C'),tips:['Meglio stagionato almeno 3 mesi: cola meno.','Con origano e un goccio d\'aceto è alla siciliana.'],mar:['formaggio']},
+{id:'scamorza',cat:'formaggi',n:'Scamorza affumicata',d:'A fette',in:{t:R(1,2,1.5,.5)},fix:{none:true,label:'Segnata fuori, morbida dentro.'},
+ calc:p=>done(two('alta','Diretta alta, griglia unta',70*p.t/1.5),'250–280 °C'),tips:['Fredda di frigo e griglia rovente.'],mar:['formaggio']},
+{id:'halloumi',cat:'formaggi',n:'Halloumi',d:'A fette',in:{t:R(.5,2,1,.5)},fix:{none:true,label:'Dorato e croccante fuori: non cola.'},
+ calc:p=>done(two('alta','Diretta alta',120*p.t),'250 °C'),tips:['Non cola: puoi cuocerlo anche più a lungo.','Ottimo con limone e menta.'],mar:['formaggio']},
+/* PANE E FRUTTA */
+{id:'bruschette',cat:'frutta',n:'Bruschette',d:'Pane a fette',in:{n:R(1,60,12,1)},fix:{none:true,label:'Croccante e segnato.'},
+ calc:()=>done(two('alta','Diretta alta',60),'250 °C'),tips:['Pane di semola del giorno prima, fette da 1,5 cm.'],mar:['bruschetta']},
+{id:'ananas',cat:'frutta',n:'Ananas',d:'Fette da 2 cm',in:{n:R(1,30,8,1)},fix:{none:true,label:'Caramellato e caldo.'},
+ calc:()=>done(two('alta','Diretta alta',180),'250 °C'),tips:['Togli la parte centrale dura.'],mar:['frutta']},
+{id:'pesche',cat:'frutta',n:'Pesche o albicocche',d:'A metà, senza nocciolo',in:{n:R(1,30,6,1)},fix:{none:true,label:'Morbide e segnate.'},
+ calc:()=>done([st('media','Taglio in giù sulla griglia unta',180),st('media','Gira, un filo di miele sul taglio',120,{flip:true})],'200 °C'),tips:['Frutta soda, non troppo matura.'],mar:['frutta']},
+{id:'banane',cat:'frutta',n:'Banane',d:'Intere con la buccia',in:{n:R(1,20,4,1)},fix:{none:true,label:'Buccia nera, polpa cremosa.'},
+ calc:()=>done([st('media','Intere con la buccia, coperchio chiuso',360)],'200 °C'),tips:['Aprile per lungo e metti cioccolato fondente dentro.'],mar:['frutta']}
+];
+const CUT=Object.fromEntries(CUTS.map(c=>[c.id,c]));
+const short=c=>c.n.split(' / ')[0];
+
+/* ---------- note e correzioni ---------- */
+let notes=store.get('notes',{});
+let favs=store.get('favs',[]);
+let diary=store.get('diary',[]);
+let G=null,Q=null;
+let onCloud=()=>{};
+function save(key,val){store.set(key,val);store.set('upd',Date.now());onCloud()}
+
+/* partenza dal frigo: quanto si allunga la cottura */
+function coldInfo(cut,s0){
+  if(NOCOLD.has(cut.cat)||cut.nocold)return null;
+  const i=cut.in||{};
+  const extra=i.t?Math.min(.3,.06*s0.t+.02):(i.w?.2:.1);
+  const wait=i.t?(s0.t>=3?60:30):(i.w?60:20);
+  return{extra,wait};
+}
+
+/* ---------- calcolo ---------- */
+function compute(cut,s0){
+  let d=null,core=null;
+  if(cut.dn){d=DN[cut.dn].find(x=>x.id===s0.did)||DN[cut.dn].find(x=>x.id===DEF_DN[cut.dn]);core={pull:d.pull,fin:d.fin}}
+  else if(cut.fix&&!cut.fix.none)core={pull:cut.fix.pull,fin:cut.fix.fin};
+  const p={t:s0.t,w:s0.w,n:s0.n,pull:core?core.pull:0,fin:core?core.fin:0,f:d?fac(d.pull):1,did:d?d.id:null};
+  const r=cut.calc(p);
+  const corr=(notes[cut.id]&&+notes[cut.id].corr)||0;
+  const steps=r.s.map(x=>Object.assign({},x));
+  if(corr)steps.forEach(x=>{if(x.z!=='riposo'&&x.z!=='prep')x.s=Math.max(15,Math.round(x.s*(1+corr/100)/5)*5)});
+  const ci=coldInfo(cut,s0);
+  if(ci&&s0.cold)steps.forEach(x=>{if(x.z==='alta'||x.z==='media'||x.z==='indiretta')x.s=Math.round(x.s*(1+ci.extra)/5)*5});
+  if(s0.pre)steps.unshift(st('prep',steps.some(x=>x.z==='ir')?'Tutti i bruciatori al massimo, coperchio chiuso. Accendi l\'infrarosso negli ultimi 5 min.':'Tutti i bruciatori al massimo, coperchio chiuso',600));
+  const sum=f=>steps.filter(f).reduce((a,x)=>a+x.s,0);
+  return{steps,lid:r.lid,core,d,corr,ci,cold:!!(ci&&s0.cold),cook:sum(x=>x.z!=='riposo'&&x.z!=='prep'),rest:sum(x=>x.z==='riposo'),pre:sum(x=>x.z==='prep'),total:sum(()=>true)};
+}
+
+/* ---------- stato calcolatore ---------- */
+let S=store.get('calc',null);
+function defaults(cut){const i=cut.in||{};return{cat:cut.cat,cut:cut.id,t:i.t?i.t[2]:null,w:i.w?i.w[2]:null,n:i.n?i.n[2]:1,did:cut.dn?DEF_DN[cut.dn]:null,pre:S?S.pre:true,cold:S?!!S.cold:false}}
+if(!S||!CUT[S.cut])S=Object.assign(defaults(CUT.costata),{pre:true});
+
+function setCat(cat){const first=CUTS.find(c=>c.cat===cat);S=defaults(first);renderCalc()}
+function setCut(id){S=defaults(CUT[id]);renderCalc()}
+
+function stepper(key,label,range,unit){
+  const [min,max,,step]=range;const v=S[key];
+  return `<div class="field"><label for="in-${key}">${label}</label><div class="stepper"><button data-k="${key}" data-d="-1" aria-label="Diminuisci ${label}">−</button><input id="in-${key}" data-key="${key}" data-min="${min}" data-max="${max}" inputmode="decimal" value="${v}"><span class="u">${unit}</span><button data-k="${key}" data-d="1" aria-label="Aumenta ${label}">+</button></div></div>`;
+}
+function renderCalc(){
+  const cut=CUT[S.cut];
+  $('#cats').innerHTML=CATS.map(c=>`<button class="chip" data-cat="${c.id}" aria-pressed="${c.id===S.cat}">${c.l}</button>`).join('');
+  $('#cuts').innerHTML=CUTS.filter(c=>c.cat===S.cat).map(c=>`<button class="cut" data-cut="${c.id}" aria-pressed="${c.id===S.cut}"><b>${esc(c.n)}</b><small>${esc(c.d)}</small></button>`).join('');
+  const i=cut.in||{};const f=[];
+  if(i.t)f.push(stepper('t',cut.tlabel||'Spessore',i.t,'cm'));
+  if(i.w)f.push(stepper('w',cut.in.n?'Peso a pezzo':'Peso',i.w,'g'));
+  if(i.n)f.push(stepper('n','Pezzi',i.n,'pz'));
+  $('#measures').innerHTML=f.length?`<div class="label">Misure</div><div class="fields">${f.join('')}</div>`:'';
+  if(cut.dn){
+    $('#doneWrap').innerHTML=`<div class="label">Cottura</div><div class="seg" role="group" aria-label="Grado di cottura">${DN[cut.dn].map(d=>`<button data-did="${d.id}" aria-pressed="${d.id===S.did}">${d.l}<i>${d.fin} °C</i></button>`).join('')}</div>`;
+  }else{
+    const fx=cut.fix||{};
+    $('#doneWrap').innerHTML=`<div class="label">Cottura</div><div class="fixed">${fx.none?esc(fx.label):`Sempre ben cotto: ${fx.fin} °C al cuore. Per sicurezza non si serve meno cotto.`}</div>`;
+  }
+  if(coldInfo(cut,S)){
+    $('#doneWrap').insertAdjacentHTML('beforeend',`<div class="label">Partenza</div><div class="seg" role="group" aria-label="Temperatura di partenza"><button data-cold="0" aria-pressed="${!S.cold}">Temp. ambiente<i>consigliata</i></button><button data-cold="1" aria-pressed="${!!S.cold}">Dal frigo<i>più lenta</i></button></div>`);
+  }
+  $('#pre').checked=!!S.pre;
+  renderResult();
+  store.set('calc',S);
+}
+function thermo(core){
+  if(!core)return'';const lo=35,hi=95,pc=v=>Math.min(100,Math.max(0,(v-lo)/(hi-lo)*100));
+  return `<div class="thermo"><p><b>Togli a ${core.pull} °C</b> · nel riposo arriva a ${core.fin} °C</p><div class="bar" aria-hidden="true"><span class="mk pull" style="left:${pc(core.pull)}%"></span><span class="mk" style="left:${pc(core.fin)}%"></span></div><div class="scale"><span>35°</span><span>50°</span><span>65°</span><span>80°</span><span>95°</span></div></div>`;
+}
+function stepsHTML(steps){
+  return `<ol class="steps">${steps.map(x=>`<li><div class="t"><span class="zp ${ZONES[x.z].c}">${ZONES[x.z].l}</span><div>${esc(x.t)}</div>${x.probe?`<span class="pr">Sonda: togli a ${x.probe} °C · tempo indicativo</span>`:''}</div><div class="d">${fmt(x.s)}</div></li>`).join('')}</ol>`;
+}
+let LAST=null;
+function renderResult(){
+  const cut=CUT[S.cut],r=compute(cut,S);LAST=r;
+  const dl=r.d?r.d.l:(cut.fix&&!cut.fix.none?'Ben cotto':'');
+  const meas=[S.t!=null&&cut.in.t?`${S.t} cm`:'',S.w!=null&&cut.in.w?`${S.w} g`:'',cut.in.n&&S.n>1?`${S.n} pezzi`:''].filter(Boolean).join(' · ');
+  const n=notes[cut.id]||{};
+  const marHTML=(cut.mar||[]).map(id=>MAR[id]).filter(Boolean).map(m=>`<div class="mar"><b>${esc(m.n)}</b> <span class="tm">${esc(m.t)}</span><p>${esc(m.i)}</p></div>`).join('');
+  $('#result').innerHTML=`
+  <div class="result">
+    <div class="res-head"><h2>${esc(cut.n)}</h2><p>${[meas,dl].filter(Boolean).join(' · ')}${r.corr?` · correzione ${r.corr>0?'+':''}${r.corr}%`:''}</p>${r.ci?`<p>${r.cold?`Partenza dal frigo: tempi allungati del ${Math.round(r.ci.extra*100)}%.`:`Toglila dal frigo ${r.ci.wait} min prima di cuocere.`}</p>`:''}</div>
+    <div class="stats">
+      <div class="stat"><small>Cottura</small><strong>${fmt(r.cook)}</strong><em>${r.pre?'+ 10 min preriscaldo':'senza preriscaldo'}</em></div>
+      <div class="stat"><small>Coperchio</small><strong style="font-size:15px;line-height:1.3;font-family:var(--f-body)">${esc(r.lid)}</strong></div>
+      <div class="stat"><small>Al cuore</small><strong>${r.core?r.core.fin+' °C':'a vista'}</strong><em>${r.core?'togli a '+r.core.pull+' °C':'vedi indicazioni'}</em></div>
+      <div class="stat"><small>Riposo</small><strong>${r.rest?fmt(r.rest):'—'}</strong></div>
+    </div>
+    ${thermo(r.core)}
+    ${stepsHTML(r.steps)}
+    <div class="actions">
+      <button class="btn primary" id="go">Avvia timer guidato · ${fmt(r.total)}</button>
+      <button class="btn" id="fav">★ Salva</button>
+      <button class="btn" id="toG">+ Grigliata</button>
+    </div>
+  </div>
+  <div class="panel"><h3>Come impostare il Tahoe</h3><p class="muted" style="margin:0 0 10px;font-size:13.5px">Arancio: al massimo · giallo: a metà · grigio: spento · barretta scura: dove va la carne.</p><div class="bz">${[...new Set(r.steps.map(x=>x.z))].filter(z=>ZSET[z]).map(z=>zoneFig(z)).join('')}</div></div>
+  <div class="panel"><h3>Consigli</h3><ul>${(cut.tips||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>
+  ${marHTML?`<div class="panel"><h3>Marinatura e condimento</h3>${marHTML}</div>`:''}
+  <div class="panel"><h3>Le mie note su questo taglio</h3>
+    <textarea id="note" placeholder="Es. dal mio macellaio la salsiccia è più grassa">${esc(n.text||'')}</textarea>
+    <div class="row" style="margin-top:8px"><label for="corr" class="muted" style="font-size:14px">Correzione tempi</label>
+      <select id="corr">${[-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30].map(v=>`<option value="${v}" ${v===(+n.corr||0)?'selected':''}>${v>0?'+':''}${v}%</option>`).join('')}</select>
+      <span class="muted" style="font-size:13px">si applica sempre a questo taglio</span></div>
+    ${hintHTML(cut.id)}
+  </div>
+  <div class="panel"><h3>Com'è venuta?</h3><p class="muted" style="margin:0;font-size:14px">Segnalo nel diario dopo la cottura${lastFor(cut.id)?` · ultima volta: <span class="tag ${lastFor(cut.id).esito}">${ESITI[lastFor(cut.id).esito]}</span>`:''}</p>
+    <div class="outc"><button data-esito="poco">Poco cotta</button><button data-esito="giusto">Giusta</button><button data-esito="troppo">Troppo cotta</button></div></div>`;
+}
+const ESITI={poco:'Poco cotta',giusto:'Giusta',troppo:'Troppo cotta'};
+const lastFor=id=>diary.find(e=>e.cut===id);
+function hintFor(id){
+  const corr=(notes[id]&&+notes[id].corr)||0;
+  const rec=diary.filter(e=>e.cut===id&&(e.corr||0)===corr).slice(0,2);
+  if(rec.length<2||rec[0].esito!==rec[1].esito||rec[0].esito==='giusto')return null;
+  const v=Math.max(-30,Math.min(30,corr+(rec[0].esito==='troppo'?-10:10)));
+  if(v===corr)return null;
+  return{v,esito:rec[0].esito};
+}
+function hintHTML(id){const h=hintFor(id);if(!h)return'';return`<div class="hint"><span>Le ultime 2 volte è venuta ${h.esito==='troppo'?'troppo cotta':'poco cotta'}: ti consiglio ${h.v>0?'+':''}${h.v}% sui tempi.</span><button class="btn small" id="applyHint" data-v="${h.v}">Applica</button></div>`}
+function addDiary(cutId,s,esito){
+  const corr=(notes[cutId]&&+notes[cutId].corr)||0;
+  diary.unshift({id:Date.now()+Math.floor(Math.random()*1000),ts:Date.now(),cut:cutId,s:{t:s.t,w:s.w,n:s.n,did:s.did,cold:!!s.cold},esito,corr});
+  if(diary.length>300)diary.length=300;
+  save('diary',diary);
+}
+function logOutcome(esito){
+  addDiary(S.cut,S,esito);renderResult();renderSaved();
+  const h=hintFor(S.cut);toast(h?`Segnato nel diario · c'è un consiglio sui tempi`:`Segnato nel diario: ${ESITI[esito].toLowerCase()}`);
+}
+
+/* eventi calcolatore */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.cat){setCat(b.dataset.cat);return}
+  if(b.dataset.cut){setCut(b.dataset.cut);return}
+  if(b.dataset.did){S.did=b.dataset.did;renderCalc();return}
+  if(b.dataset.cold){S.cold=b.dataset.cold==='1';renderCalc();return}
+  if(b.dataset.esito){logOutcome(b.dataset.esito);return}
+  if(b.id==='applyHint'){const id=S.cut;notes[id]=Object.assign({},notes[id],{corr:+b.dataset.v});save('notes',notes);renderResult();renderSaved();toast('Correzione applicata');return}
+  if(b.dataset.k){const cut=CUT[S.cut],k=b.dataset.k,rg=cut.in[k];S[k]=clamp(+(S[k]+(+b.dataset.d)*rg[3]).toFixed(2),rg[0],rg[1]);const inp=$('#in-'+k);if(inp)inp.value=S[k];renderResult();store.set('calc',S);return}
+  if(b.dataset.go){showTab(b.dataset.go);return}
+  if(b.id==='go'){startSteps();return}
+  if(b.id==='fav'){addFav();return}
+  if(b.id==='toG'){addToG();return}
+});
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,isNaN(v)?a:v));
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.key){const cut=CUT[S.cut],k=t.dataset.key,rg=cut.in[k];S[k]=clamp(parseFloat(String(t.value).replace(',','.')),rg[0],rg[1]);t.value=S[k];renderResult();store.set('calc',S)}
+  if(t.id==='pre'){S.pre=t.checked;renderResult();store.set('calc',S)}
+  if(t.id==='corr'){const id=S.cut;notes[id]=Object.assign({},notes[id],{corr:+t.value});save('notes',notes);renderResult();renderSaved()}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='note'){const id=S.cut;notes[id]=Object.assign({},notes[id],{text:e.target.value});save('notes',notes);clearTimeout(window.__nt);window.__nt=setTimeout(renderSaved,600)}
+});
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.hidden=true,2200)}
+
+/* ---------- preferiti ---------- */
+function summary(cut,s){const d=cut.dn?(DN[cut.dn].find(x=>x.id===s.did)||{}).l:'';return[s.t!=null&&cut.in.t?`${s.t} cm`:'',s.w!=null&&cut.in.w?`${s.w} g`:'',d,s.cold&&coldInfo(cut,s)?'dal frigo':''].filter(Boolean).join(' · ')}
+function addFav(){
+  const cut=CUT[S.cut];const f={id:Date.now(),s:Object.assign({},S)};
+  if(favs.some(x=>JSON.stringify(Object.assign({},x.s,{pre:0}))===JSON.stringify(Object.assign({},S,{pre:0})))){toast('È già nei preferiti');return}
+  favs.unshift(f);save('favs',favs);renderSaved();toast(`Salvato: ${short(cut)}${summary(cut,S)?' · '+summary(cut,S):''}`);
+}
+function renderSaved(){
+  $('#favs').innerHTML=favs.length?favs.map(f=>{const c=CUT[f.s.cut];if(!c)return'';return`<div class="fav"><div><b>${esc(c.n)}</b><small>${esc(summary(c,f.s)||c.d)}</small></div><div class="row"><button class="btn small" data-open="${f.id}">Apri</button><button class="btn small ghost" data-delfav="${f.id}" aria-label="Elimina">×</button></div></div>`}).join(''):`<div class="empty">Nessun preferito. Nel calcolatore tocca ★ Salva per richiamare le tue cotture abituali con un tocco.</div>`;
+  const ns=Object.entries(notes).filter(([id,n])=>CUT[id]&&((n.text&&n.text.trim())||+n.corr));
+  const dfmt=ts=>{const d=new Date(ts);return d.toLocaleDateString('it-IT',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})};
+  const shown=diary.filter(e=>CUT[e.cut]).slice(0,40);
+  $('#diary').innerHTML=shown.length?shown.map(e=>{const c=CUT[e.cut];return`<div class="fav"><div><b>${esc(c.n)}</b> <span class="tag ${e.esito}">${ESITI[e.esito]}</span><small style="display:block">${dfmt(e.ts)}${summary(c,e.s)?' · '+esc(summary(c,e.s)):''}${e.corr?` · tempi ${e.corr>0?'+':''}${e.corr}%`:''}</small></div><button class="btn small ghost" data-deld="${e.id}" aria-label="Elimina dal diario">×</button></div>`}).join('')+(diary.length>40?`<p class="lead">Mostro le ultime 40 di ${diary.length}.</p>`:''):`<div class="empty">Ancora nessuna cottura segnata. Alla fine del timer, o sotto ogni risultato, tocca Poco cotta, Giusta o Troppo cotta.</div>`;
+  $('#notesList').innerHTML=ns.length?ns.map(([id,n])=>`<div class="fav"><div><b>${esc(CUT[id].n)}</b><small>${+n.corr?`Tempi ${n.corr>0?'+':''}${n.corr}%`:''}${+n.corr&&n.text?' · ':''}${esc((n.text||'').slice(0,90))}</small></div><button class="btn small" data-opencut="${id}">Apri</button></div>`).join(''):`<div class="empty">Nessuna nota. Sotto ogni risultato puoi scrivere le tue osservazioni e correggere i tempi in percentuale.</div>`;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.open){const f=favs.find(x=>String(x.id)===b.dataset.open);if(f){S=Object.assign({},f.s);renderCalc();showTab('cuoci')}}
+  if(b.dataset.delfav){favs=favs.filter(x=>String(x.id)!==b.dataset.delfav);save('favs',favs);renderSaved()}
+  if(b.dataset.deld){diary=diary.filter(x=>String(x.id)!==b.dataset.deld);save('diary',diary);renderSaved();if(S)renderResult()}
+  if(b.dataset.opencut){setCut(b.dataset.opencut);showTab('cuoci')}
+});
+
+/* ---------- grigliata ---------- */
+G=store.get('grill',null);
+if(!G){G={example:true,items:[
+  {id:1,s:Object.assign(defaults(CUT.costata),{t:4,w:900,did:'ms'}),q:2},
+  {id:2,s:Object.assign(defaults(CUT.costolette),{t:1.5,did:'ms'}),q:12},
+  {id:3,s:Object.assign(defaults(CUT.salsiccia),{t:3}),q:10},
+  {id:4,s:defaults(CUT.peperoni),q:4}],serve:null}}
+function addToG(){
+  if(G.example){G={example:false,items:[],serve:G.serve}}
+  const cut=CUT[S.cut];G.items.push({id:Date.now(),s:Object.assign({},S,{pre:false}),q:cut.in.n?S.n:1});
+  save('grill',G);renderG();toast(`${short(cut)} aggiunto alla grigliata`);
+}
+function plan(){
+  const its=G.items.filter(it=>CUT[it.s.cut]).map(it=>{const c=CUT[it.s.cut];const r=compute(c,Object.assign({},it.s,{pre:false}));return{it,c,r,name:short(c)+(it.q>1?' ×'+it.q:'')}});
+  const max=Math.max(0,...its.map(x=>x.r.total));const PRE=600;const ev=[];
+  /* infrarosso: un gruppo di pezzi alla volta. Chi va per ultimo resta fermo, gli altri anticipano. */
+  its.forEach(x=>{x.start=max-x.r.total;x.shift=0;x.ir=[];let t=0,open=null;
+    x.r.steps.forEach(s=>{if(s.z==='ir'){if(!open)open=[t,t+s.s];else open[1]=t+s.s}else if(open){x.ir.push(open);open=null}t+=s.s});if(open)x.ir.push(open)});
+  const busy=[];
+  its.filter(x=>x.ir.length).sort((a,b)=>(b.start+b.ir[0][0])-(a.start+a.ir[0][0])).forEach(x=>{
+    for(let k=0;k<60;k++){let moved=false;
+      for(const [a,b] of x.ir){const A=x.start-x.shift+a,B=x.start-x.shift+b;
+        const hit=busy.find(([p,q])=>A<q&&B>p);if(hit){x.shift+=B-hit[0]+15;moved=true;break}}
+      if(!moved)break}
+    x.ir.forEach(([a,b])=>busy.push([x.start-x.shift+a,x.start-x.shift+b]));
+  });
+  const lead=Math.max(0,...its.map(x=>x.shift-x.start));
+  ev.push({at:0,z:'prep',text:'Accendi tutti i bruciatori al massimo e chiudi il coperchio'});
+  if(its.some(x=>x.ir.length))ev.push({at:PRE-300,z:'ir',text:'Accendi l\'infrarosso laterale'});
+  its.forEach(x=>{let t=PRE+lead+x.start-x.shift;x.r.steps.forEach((s,i)=>{let text;
+    if(i===0)text=`Metti ${x.name}: ${s.t.replace(/ · lato 1$/,'')}`;
+    else if(s.z==='riposo')text=x.shift>=60?`Togli ${x.name} e tienilo coperto in caldo (pronto ${fmt(x.shift)} prima)`:`Togli ${x.name} e fai riposare`;
+    else if(s.flip)text=`Gira ${x.name}`;
+    else text=`${x.name}: ${s.t.replace(/ · lato 1$/,'')}`;
+    ev.push({at:t,z:s.z,text,probe:s.probe?`${x.name}: sonda a ${s.probe} °C`:'',note:(s.z==='ir'&&i===x.r.steps.findIndex(y=>y.z==='ir')&&x.it.q>3)?'Se non ci stanno tutti sull\'infrarosso, scottali a turni':''});t+=s.s;});});
+  ev.sort((a,b)=>a.at-b.at);
+  const end=PRE+lead+max;ev.push({at:end,z:'riposo',text:'Tutto pronto: si mangia!'});
+  const gas=its.reduce((a,x)=>a+x.r.steps.reduce((b,s)=>b+KW[s.z]*s.s/3600,0),0)+13.6*PRE/3600;
+  return{its,ev,end,gas:gas/12.8};
+}
+function renderG(){
+  $('#gBanner').innerHTML=G.example?`<div class="banner"><span>Esempio di grigliata per 8–10 persone. Aggiungi i tuoi pezzi dal calcolatore.</span><button class="btn small" id="gUseEx">Tienilo</button></div>`:'';
+  $('#gItems').innerHTML=G.items.length?G.items.map(it=>{const c=CUT[it.s.cut];if(!c)return'';const r=compute(c,Object.assign({},it.s,{pre:false}));return`<div class="item"><div><b>${esc(c.n)}</b><small>${esc(summary(c,it.s)||c.d)} · ${fmt(r.total)}</small><br><button class="x" data-gdel="${it.id}">Rimuovi</button></div><div class="qty"><button data-gq="${it.id}" data-d="-1" aria-label="Meno">−</button><span>${it.q}</span><button data-gq="${it.id}" data-d="1" aria-label="Più">+</button></div></div>`}).join(''):`<div class="empty">La grigliata è vuota. Dal calcolatore scegli un taglio e tocca + Grigliata.</div>`;
+  if(!G.items.length){$('#gPlan').innerHTML='';return}
+  const P=plan();
+  const serve=G.serve||(()=>{const d=new Date(Date.now()+P.end*1000+15*60000);d.setMinutes(Math.ceil(d.getMinutes()/15)*15);return`${String(d.getHours()%24).padStart(2,'0')}:${String(d.getMinutes()%60).padStart(2,'0')}`})();
+  const [hh,mm]=serve.split(':').map(Number);const start=new Date();start.setHours(hh,mm,0,0);start.setTime(start.getTime()-P.end*1000);
+  const sh=`${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`;
+  $('#gPlan').innerHTML=`
+   <div class="label">Piano</div>
+   <div class="panel">
+     <div class="row" style="justify-content:space-between"><div><span class="muted" style="font-size:13px">Durata dall'accensione</span><div class="big">${fmt(P.end)}</div></div><div style="text-align:right"><span class="muted" style="font-size:13px">GPL stimato</span><div class="big">${(P.gas).toFixed(1).replace('.',',')} kg</div></div></div>
+     <div class="serve"><label for="gServe" class="muted" style="font-size:14px">Si mangia alle</label><input type="time" id="gServe" value="${serve}"><span>→ accendi alle <b class="num">${sh}</b></span></div>
+   </div>
+   <div class="panel"><ol class="plan">${P.ev.map(e=>`<li><span class="at">${clock(e.at)}</span><div><span class="zp ${ZONES[e.z].c}">${ZONES[e.z].l}</span><div>${esc(e.text)}</div>${e.probe?`<span class="muted" style="font-size:13px">${esc(e.probe)}</span>`:''}${e.note?`<span class="muted" style="font-size:13px;display:block">${esc(e.note)}</span>`:''}</div></li>`).join('')}</ol></div>
+   <div style="margin-top:12px"><button class="btn primary" id="gStart" style="width:100%">Avvia grigliata</button></div>
+   <p class="lead" style="margin-top:8px">I tempi partono dall'accensione. L'infrarosso lo usa un taglio alla volta: chi lo trova occupato viene anticipato e poi tenuto in caldo.</p>`;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.id==='gUseEx'){G.example=false;save('grill',G);renderG()}
+  if(b.id==='gClear'){G={example:false,items:[],serve:G.serve};save('grill',G);renderG()}
+  if(b.id==='gAdd'){showTab('cuoci')}
+  if(b.dataset.gdel){G.items=G.items.filter(x=>String(x.id)!==b.dataset.gdel);G.example=false;save('grill',G);renderG()}
+  if(b.dataset.gq){const it=G.items.find(x=>String(x.id)===b.dataset.gq);if(it){it.q=Math.max(1,it.q+(+b.dataset.d));save('grill',G);renderG()}}
+  if(b.id==='gStart'){const P=plan();startEvents('Grigliata',P.ev.map(x=>({at:x.at,z:x.z,t:x.text,probe:[x.probe,x.note].filter(Boolean).join(' · ')})),P.end,false,{grill:P.its.map(x=>({cut:x.c.id,s:Object.assign({},x.it.s),name:x.name}))})}
+});
+document.addEventListener('change',e=>{if(e.target.id==='gServe'){G.serve=e.target.value;save('grill',G);renderG()}});
+
+/* ---------- quantità ---------- */
+const QCATS=[
+  {id:'manzo',l:'Manzo',def:25,hint:g=>`≈ ${Math.max(1,Math.round(g/900))} costate da 900 g con osso, o ${Math.max(1,Math.round(g/300))} bistecche da 300 g`},
+  {id:'agnello',l:'Agnello',def:15,hint:g=>`≈ ${Math.max(1,Math.round(g/60))} costolette (60 g l'una)`},
+  {id:'maiale',l:'Maiale',def:15,hint:g=>`≈ ${Math.max(1,Math.round(g/250))} braciole da 250 g`},
+  {id:'salsiccia',l:'Salsiccia',def:20,hint:g=>`≈ ${Math.max(1,Math.round(g/100))} pezzi da 100 g`},
+  {id:'pollo',l:'Pollo',def:10,hint:g=>`≈ ${Math.max(1,Math.round(g/250))} cosce da 250 g`},
+  {id:'hamburger',l:'Hamburger',def:15,hint:g=>`${Math.max(1,Math.round(g/180))} hamburger da 180 g`},
+  {id:'pesce',l:'Pesce',def:0,hint:g=>`≈ ${Math.max(1,Math.round(g/200))} tranci da 200 g`}
+];
+Q=store.get('qty',{a:10,k:2,app:'normale',mix:Object.fromEntries(QCATS.map(c=>[c.id,c.def]))});
+const APP={leggero:{l:'Leggero',g:300},normale:{l:'Normale',g:400},abbondante:{l:'Abbondante',g:500}};
+function renderQ(){
+  $('#qA').value=Q.a;$('#qK').value=Q.k;
+  $('#qApp').innerHTML=Object.entries(APP).map(([k,v])=>`<button data-app="${k}" aria-pressed="${k===Q.app}">${v.l}<i>${v.g} g a testa</i></button>`).join('');
+  $('#qMix').innerHTML=QCATS.map(c=>`<div><label for="mx-${c.id}">${c.l}</label><input type="range" id="mx-${c.id}" data-mix="${c.id}" min="0" max="50" step="5" value="${Q.mix[c.id]||0}"><output>${Q.mix[c.id]||0}</output></div>`).join('');
+  renderQOut();
+}
+function renderQOut(){
+  const tot=Object.values(Q.mix).reduce((a,b)=>a+(+b),0)||1;
+  const persone=Q.a+Q.k*.5;const meat=persone*APP[Q.app].g;
+  const kg=g=>(g/1000).toFixed(2).replace('.',',')+' kg';
+  const list=QCATS.filter(c=>+Q.mix[c.id]>0).map(c=>{const g=Math.round(meat*Q.mix[c.id]/tot/50)*50;return{l:c.l,q:kg(g),h:c.hint(g)}});
+  const ore=Math.min(3.5,1+.1*(Q.a+Q.k));const gpl=ore*.7+.18;
+  list.push({l:'Verdure da grigliare',q:kg(Math.round((Q.a+Q.k)*150/50)*50),h:'melanzane, peperoni, zucchine, cipolle'});
+  list.push({l:'Pane',q:kg(Math.round((Q.a+Q.k)*80/50)*50),h:'circa 80 g a persona'});
+  const gas={l:'GPL',q:gpl.toFixed(1).replace('.',',')+' kg',h:`grigliata di circa ${fmt(ore*3600)}; una bombola da 10 kg ne fa circa ${Math.floor(10/gpl)}`};
+  $('#qOut').innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13.5px">Carne cruda totale: <b class="num">${(meat/1000).toFixed(1).replace('.',',')} kg</b> per ${Q.a} adulti${Q.k?` e ${Q.k} bambini (contati la metà)`:''}. Per i tagli con osso aggiungi il 30%.</p><table class="qtab">${[...list,gas].map(r=>`<tr><td>${r.l}<small>${r.h}</small></td><td>${r.q}</td></tr>`).join('')}</table>`;
+  const txt=`Spesa grigliata – ${Q.a} adulti${Q.k?` e ${Q.k} bambini`:''}\n\n`+list.map(r=>`• ${r.l}: ${r.q} (${r.h})`).join('\n')+`\n• GPL: controlla la bombola (servono circa ${gas.q})\n• Sale grosso, olio, limoni, erbe per le marinature`;
+  $('#shopTxt').value=txt;updateWa();
+}
+function updateWa(){$('#shopWa').href='https://wa.me/?text='+encodeURIComponent($('#shopTxt').value)}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.q){const k=b.dataset.q==='qA'?'a':'k';Q[k]=Math.max(k==='a'?1:0,Math.min(60,Q[k]+(+b.dataset.d)));save('qty',Q);renderQ()}
+  if(b.dataset.app){Q.app=b.dataset.app;save('qty',Q);renderQ()}
+  if(b.id==='shopCopy'){const ta=$('#shopTxt');const done=()=>toast('Lista copiata');
+    try{navigator.clipboard.writeText(ta.value).then(done,()=>{ta.focus();ta.select();toast('Testo selezionato: tocca Copia')})}catch(err){ta.focus();ta.select();toast('Testo selezionato: tocca Copia')}}});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.mix){Q.mix[t.dataset.mix]=+t.value;t.nextElementSibling.textContent=t.value;renderQOut()}if(t.id==='shopTxt')updateWa()});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset.mix){save('qty',Q)}if(t.id==='qA'||t.id==='qK'){const k=t.id==='qA'?'a':'k';Q[k]=clamp(parseInt(t.value,10),k==='a'?1:0,60);save('qty',Q);renderQ()}});
+
+/* ---------- manuale ---------- */
+function tbl(head,rows){return`<div class="tw"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+const MANUAL=[
+ ['Come usare il Tahoe',`<p>La regola base: crosta sull'infrarosso, cottura sulla griglia principale, sempre con un termometro a sonda.</p>
+ ${tbl(['Zona','Come impostarla','Per cosa'],[['Infrarosso laterale','Massimo, 5 min di preriscaldo','Scottare bistecche e costolette (fino a ~980 °C)'],['Diretta alta','2 bruciatori al massimo','Hamburger, braciole, spiedini'],['Diretta media','Bruciatori a metà','Salsicce, pollo, pesce, verdure'],['Indiretta','2 bruciatori accesi, carne sopra quelli spenti, coperchio chiuso','Tagli spessi, costine, pollo intero, cosciotto']])}
+ <p><b>Regole d'oro</b></p><ol><li>Preriscalda 10–15 minuti a coperchio chiuso: il termometro del coperchio deve segnare 250–300 °C.</li><li>Togli la carne dal frigo 30–45 minuti prima (i tagli spessi anche 1 ora).</li><li>Asciuga la superficie con carta da cucina: carne bagnata bolle e non fa crosta.</li><li>Ungi la carne, non la griglia: un filo d'olio di semi.</li><li>Sale grosso subito prima o almeno 40 minuti prima, mai a metà strada.</li><li>Gira poco: una volta per lato, mezzo giro di 90° per la quadrettatura.</li><li>Fai riposare: 5 minuti per bistecche e costolette, 10–15 per i tagli grossi.</li><li>Usa un termometro a sonda: la temperatura al cuore vale più di qualsiasi tempo.</li></ol>
+ <p><b>Infrarosso</b>: è molto più rapido della griglia normale. Al massimo bastano 60–90 secondi per lato. Non lasciarci mai la carne incustodita e non usarlo per salsicce o pezzi grassi, che fanno fiammate.</p>`],
+ ['Diretta e indiretta',`<p><b>Diretta</b>: la carne sta sopra la fiamma accesa. Il calore forte dal basso fa crosta e marcature e cuoce in fretta. Serve per tutto ciò che è sottile (fino a 2–3 cm) e cuoce in meno di 20 minuti.</p>
+ <p><b>Indiretta</b>: la carne sta sopra i bruciatori spenti e cuoce con l'aria calda sotto il coperchio, come in forno. Serve per tagli spessi, arrosti, pollo intero e costine: cuociono dentro senza bruciare fuori.</p>
+ <div class="bz" style="margin:12px 0">
+ ${zoneFig('alta')}${zoneFig('media')}${zoneFig('indiretta','Indiretta laterale')}
+ ${zoneFig('indiretta','Indiretta centrale','Per un pezzo grande (pollo intero, cosciotto): accesi 1 e 4, spenti 2 e 3, carne al centro. Il calore arriva da due lati e non serve girarla.',{st:['mid','off','off','mid','off'],meat:[1,2]})}
+ ${zoneFig('ir')}</div>
+ <p><b>Come si fa l'indiretta, passo per passo</b></p>
+ <ol><li>Preriscalda tutto al massimo per 10 minuti a coperchio chiuso.</li><li>Spegni i bruciatori 3 e 4 e porta 1 e 2 a metà.</li><li>Metti la carne sopra 3 e 4, con la parte più spessa verso i bruciatori accesi.</li><li>Chiudi il coperchio e regola 1 e 2 finché il termometro segna la temperatura voluta. Dopo ogni regolazione aspetta 2–3 minuti.</li><li>Non aprire di continuo: ogni apertura fa perdere 5–10 minuti. Controlla con la sonda.</li><li>A metà cottura ruota il pezzo di 180°: il lato verso il fuoco cuoce di più.</li></ol>
+ <p><b>Le due zone insieme</b>: nelle grigliate usi 1 e 2 come zona diretta e 3 e 4 spenti come zona indiretta, dove finire la cottura dei pezzi spessi, tenere in caldo quelli pronti e spostare quelli che fanno fiammate.</p>
+ <p>Il termometro del coperchio misura l'aria in alto: alla griglia la temperatura può essere diversa anche di 20 °C. Per cotture lunghe appoggia una seconda sonda sulla griglia, accanto alla carne.</p>`],
+ ['Crosta prima o dopo',`<p>Per i tagli alti ci sono due strade. L'app sceglie da sola in base allo spessore.</p>
+ ${tbl(['Metodo','Come','Quando'],[['Crosta prima','Infrarosso 1–2 min per lato, poi indiretta fino alla temperatura','Fiorentina, filetto: pezzi alti ma non enormi'],['Cottura inversa','Indiretta piano a 160–180 °C fino a 8 °C sotto il punto voluto, poi infrarosso 1 min per lato','Costata, tomahawk, tagliata: sopra i 2,5 cm'],['Solo diretta','Infrarosso o diretta alta, poi eventualmente diretta media','Sotto i 2,5 cm']])}
+ <p>La cottura inversa dà un colore uniforme dal bordo al centro, senza l'anello grigio sotto la crosta, ed è più facile non sbagliare la cottura. La crosta va fatta subito prima di servire: il riposo lungo non serve, bastano 5 minuti.</p>`],
+ ['La sonda',`<ul><li><b>Dove</b>: al centro del punto più spesso, entrando di lato. Mai a contatto con osso o grasso, che falsano la lettura.</li><li><b>Pollo</b>: nella parte più spessa del petto; per le cosce vicino all'osso senza toccarlo.</li><li><b>Quando</b>: nei tagli spessi inizia a misurare 5 minuti prima del tempo indicato dall'app.</li><li><b>Riposo</b>: la temperatura sale ancora di 2–3 °C nelle bistecche e fino a 5 °C negli arrosti. Per questo l'app ti dice di toglierla prima.</li><li><b>Igiene</b>: pulisci la punta tra una carne e l'altra, soprattutto dopo il pollo crudo.</li></ul>
+ <p><b>Taratura in 2 minuti</b>: riempi un bicchiere di ghiaccio tritato, aggiungi acqua fredda, mescola e aspetta un minuto. La sonda immersa (senza toccare il fondo) deve segnare 0 °C, con 1 °C di tolleranza. Se sbaglia di più, molti modelli si possono ricalibrare; altrimenti tieni conto della differenza.</p>`],
+ ['Senza sonda',`<p>Sono indicazioni approssimative: per i tagli spessi e il pollo usa la sonda.</p>
+ ${tbl(['Cosa','Come capire che è pronto'],[['Bistecca','Premi al centro con il dito: molle come la base del pollice a mano aperta = al sangue; elastica = media; soda = ben cotta'],['Salsiccia','Tagliata al centro non è rosa e il succo che esce è chiaro'],['Pollo','La coscia si muove facilmente e il succo vicino all\'osso è trasparente'],['Hamburger','Succo chiaro in superficie e centro non rosa'],['Pesce','La carne è opaca e si sfalda premendo con una forchetta'],['Costine','Piegandole con la pinza la carne si crepa in superficie']])}`],
+ ['Fiammate',`<ul><li>Nascono dal grasso che cola sui bruciatori: rifila il grasso in eccesso e asciuga le marinate con olio.</li><li>Tieni sempre una zona spenta (bruciatori 3 e 4): se fiamma, sposta lì la carne per qualche secondo.</li><li>Mai acqua sulla fiamma: solleva cenere e grasso sulla carne.</li><li>Svuota spesso il cassetto dei grassi e pulisci i diffusori: il grasso vecchio prende fuoco.</li><li>Salsicce, pancetta, capocollo e picanha mai sull'infrarosso.</li></ul>`],
+ ['Affumicare con il gas',`<p>Con una scatola per affumicare in acciaio (smoker box) dai al Tahoe un sapore di fumo, utile per pollo, costine, salsicce e pesce spada.</p>
+ <ol><li>Riempi la scatola di trucioli: faggio o ciliegio per pollo e maiale, quercia per il manzo, ulivo per un sapore mediterraneo. Mai legno trattato o resinoso.</li><li>Mettila sulla griglia sopra il bruciatore 1, al massimo, a coperchio chiuso finché esce fumo (5–10 min).</li><li>Porta il bruciatore 1 a metà, metti la carne in indiretta sopra 3 e 4 e cuoci a coperchio chiuso.</li><li>Il fumo serve soprattutto nella prima mezz'ora; se i trucioli finiscono, rabboccali una volta.</li></ol>`],
+ ['Sicurezza',`<ul><li>Accendi sempre con il coperchio aperto: il gas chiuso dentro può fare una vampata.</li><li>Se un bruciatore non si accende entro 5 secondi, chiudi la manopola, aspetta 5 minuti con il coperchio aperto e riprova.</li><li>Usalo solo all'aperto, lontano da pareti, tende e piante; mai in garage o sotto una tettoia chiusa.</li><li>Bombola dritta, nel suo vano, lontana dal sole; a fine uso chiudi prima la bombola, poi le manopole.</li><li>Tieni a portata un estintore a polvere o una coperta antifiamma, e i bambini lontani dal coperchio caldo.</li></ul>`],
+ ['Manzo',`<p>Per tutti i tagli da bistecca: crosta sull'infrarosso, poi a fuoco indiretto fino alla temperatura voluta. Per una cottura media-al sangue togli a 54 °C.</p>
+ ${tbl(['Taglio','Spessore','Metodo','Tempi'],[['Fiorentina / T-bone','4–5 cm','Infrarosso 2 min per lato, poi indiretta in piedi sull\'osso','15–20 min indiretta'],['Costata / Tomahawk','3–5 cm','Cottura inversa: indiretta fino a 45 °C, poi infrarosso 1 min per lato','30–45 min'],['Entrecôte / Ribeye','2–3 cm','Infrarosso 90 s per lato, poi diretta media','5–8 min'],['Controfiletto','2–3 cm','Infrarosso 90 s per lato, poi diretta media','5–7 min'],['Filetto','4–5 cm','Infrarosso 1 min per lato, poi indiretta','10–15 min indiretta'],['Tagliata','3 cm','Come la costata, poi a fette contro le fibre','10–15 min'],['Picanha','fette 3 cm / intera','Fette: diretta alta, grasso verso il fuoco. Intera: indiretta poi infrarosso','8 / 40 min'],['Bavetta / Flank','1–2 cm','Infrarosso o diretta alta, veloce','2–3 min per lato'],['Spiedini','cubi 3 cm','Diretta alta, girando ogni 2 min','8–10 min'],['Costoletta di vitello','2–3 cm','Infrarosso, poi diretta media o indiretta','6–12 min'],['Fettine di vitello','0,5–1 cm','Diretta alta, velocissime','1–2 min per lato']])}
+ <ul><li>Fiorentina e costate a temperatura ambiente, altrimenti il cuore resta freddo.</li><li>Il grasso esterno della costata va scottato in piedi sull'infrarosso.</li><li>I tagli magri (filetto, bavetta) non vanno oltre la media.</li><li>Sale in fiocchi e pepe macinato fresco durante il riposo.</li></ul>`],
+ ['Agnello',`<p>L'agnello dà il meglio rosato, con il cuore a 55–60 °C. Ben cotto diventa stopposo e accentua il sapore forte.</p>
+ ${tbl(['Taglio','Metodo','Tempi','Cuore'],[['Costolette','Infrarosso o diretta alta','1,5–2 min per lato','57–60 °C'],['Carré','Infrarosso 1 min per lato, poi indiretta, ossa nell\'alluminio','12–18 min','55–58 °C'],['Spalla disossata','Diretta media, poi indiretta','20–30 min','60–63 °C'],['Spalla con osso','Indiretta a 160–170 °C','2,5–3 h','88–90 °C'],['Cosciotto intero','Indiretta a 170–180 °C, doratura finale','1,5–2 h','58–60 °C'],['Cosciotto a fette','Diretta alta','3 min per lato','60 °C'],['Arrosticini','Diretta alta, girando spesso','4–6 min','—']])}
+ <ul><li>Togli il grasso in eccesso dal bordo delle costolette: in fiamma fa fumo amaro.</li><li>Spennella con un mazzetto di rosmarino intinto nella marinata.</li></ul>`],
+ ['Maiale',`<p>Il maiale è sicuro e succoso a 63–65 °C al cuore. Oltre i 70 °C le braciole seccano; salsicce e macinati invece vanno a 71 °C.</p>
+ ${tbl(['Taglio','Metodo','Tempi','Cuore'],[['Salsiccia','Diretta media, coperchio chiuso, gira ogni 3–4 min','12–18 min','71 °C'],['Salsiccia a ruota al finocchietto','Diretta media, coperchio chiuso, fissata con due spiedi','7–9 min per lato','71 °C'],['Braciola (2 cm)','Diretta alta 2 min per lato, poi media','8–10 min','63–65 °C'],['Capocollo a fette','Diretta alta, attenzione alle fiammate','3–4 min per lato','65 °C'],['Pancetta a fette','Diretta media, poi alta','6–10 min','—'],['Filetto','Diretta media su tutti i lati, poi indiretta','15–20 min','63 °C'],['Costine lente','Indiretta 140–150 °C 2 h, alluminio 1 h, salsa 15 min','3–3,5 h','Osso che si sfila']])}
+ <ul><li>Salsicce: mai bucarle e mai a fuoco alto.</li><li>Le salse dolci bruciano: solo alla fine.</li><li>Per le costine una ciotola d'acqua nella zona spenta.</li></ul>`],
+ ['Pollo e tacchino',`<p>Il pollame va sempre cotto a fondo: 74 °C per il petto, 80–85 °C per le cosce. L'infrarosso non serve.</p>
+ ${tbl(['Taglio','Metodo','Tempi','Cuore'],[['Petto intero','Diretta media 3 min per lato, poi indiretta','15–20 min','74 °C'],['Petto a fette','Diretta alta','2–3 min per lato','74 °C'],['Cosce con osso','Indiretta, poi diretta per la pelle','35–45 min','80–85 °C'],['Alette','Indiretta a 200 °C, gira a metà','35–40 min','80 °C'],['Pollo alla diavola','Pelle in su in indiretta a 200 °C, finale in diretta','45–60 min','74 / 82 °C'],['Pollo intero','Indiretta 180–190 °C','1–1,5 h','74 °C'],['Fesa di tacchino a fette','Diretta alta','2–3 min per lato','74 °C']])}
+ <ul><li>Salamoia al 5% per 1–2 ore: il petto resta molto più succoso.</li><li>Taglieri e pinze separati per il pollo crudo.</li></ul>`],
+ ['Hamburger e macinati',`<p>Tutto ciò che è macinato va cotto a 71 °C al cuore: i batteri della superficie finiscono all'interno.</p>
+ ${tbl(['Preparazione','Metodo','Tempi'],[['Hamburger 180 g (2 cm)','Diretta alta, girato una volta','3–4 min per lato'],['Smash burger','Piastra rovente, schiacciato subito','2 + 1 min'],['Polpette / bombette','Diretta media, coperchio chiuso','10–12 min'],['Salsiccia di pollo','Diretta media, coperchio chiuso','12 min'],['Spiedini misti','Diretta media, girando ogni 3 min','10–12 min'],['Involtini alla palermitana','Diretta media, poi indiretta','12–15 min']])}
+ <ul><li>Carne con il 20% di grasso, lavorata poco, fossetta al centro.</li><li>Sale solo all'esterno, appena prima di cuocere. Mai schiacciarli.</li></ul>`],
+ ['Pesce',`<p>Il pesce vuole griglia pulitissima e rovente, pelle asciutta e unta, e pochi giri. Si cuoce in diretta, quasi mai sull'infrarosso (tranne il tonno).</p>
+ ${tbl(['Pesce','Metodo','Tempi','Cuore'],[['Pesce spada (2 cm)','Diretta alta','2–3 min per lato','55 °C'],['Tonno (2,5 cm)','Infrarosso, solo fuori','30–60 s per lato','45–50 °C'],['Salmone','Pelle in giù, coperchio chiuso, senza girarlo','8–10 min','52–55 °C'],['Orata / spigola 450 g','Diretta media, pelle oliata','6–7 min per lato','58 °C'],['Gamberoni','Diretta alta','2 min per lato','—'],['Calamari / totani','Diretta alta','2–3 min per lato','—'],['Polpo lessato','Diretta alta','3 min per lato','—'],['Sarde','Griglia a cestello, diretta alta','1,5–2 min per lato','—']])}
+ <ul><li>Ungi il pesce, non la griglia. Gira con due spatole.</li><li>Il salmoriglio siciliano si spennella appena tolto dal fuoco.</li></ul>`],
+ ['Verdure',`<p>Le verdure vanno quasi tutte in diretta media. Ungi la griglia o le verdure (non le melanzane, che assorbono) e sala alla fine.</p>
+ ${tbl(['Verdura','Metodo','Tempi'],[['Melanzane (1 cm)','Diretta media','4 min per lato'],['Zucchine','Diretta media','3 min per lato'],['Peperoni interi','Diretta alta, girando, poi in sacchetto','18 min + 10 min'],['Cipolle a fette','Diretta media, con stecchino','5 min per lato'],['Funghi Portobello','Diretta media','4 min per lato'],['Pannocchie','Diretta media, girando','15–16 min'],['Patate sbollentate','Diretta media','5 min per lato'],['Carciofi ripieni','Indiretta 200 °C in piedi, poi diretta','35 + 5 min'],['Asparagi','Diretta alta, di traverso','5–6 min']])}`],
+ ['Formaggi, pane e frutta',`<p>Formaggi a pasta filata: freddi di frigo, griglia pulitissima, rovente e unta, e un solo giro con una spatola larga. Se il formaggio è molto morbido, usa un padellino di ferro sulla griglia.</p>
+ ${tbl(['Cosa','Metodo','Tempi'],[['Provola / scamorza (1,5 cm)','Diretta alta','60–75 s per lato'],['Caciocavallo (1,5 cm)','Diretta alta','90 s per lato'],['Halloumi (1 cm)','Diretta alta','2 min per lato'],['Bruschette','Diretta alta','1 min per lato'],['Ananas a fette','Diretta alta','3 min per lato'],['Pesche o albicocche a metà','Diretta media','3 + 2 min'],['Banane con la buccia','Diretta media, coperchio chiuso','6 min']])}`],
+ ['Partenza dal frigo',`<p>I tempi dell'app valgono per carne a temperatura ambiente. Se la metti sulla griglia appena tolta dal frigo, scegli "Dal frigo" nel calcolatore: allunga le fasi in diretta e in indiretta.</p>
+ ${tbl(['Taglio','Quanto prima toglierla','Se parte dal frigo'],[['Fette sottili (1–2 cm)','20–30 min','+8–14%'],['Bistecche alte (3–5 cm)','45–60 min','+20–30%'],['Arrosti a peso','1 ora','+20%'],['Pezzi piccoli e spiedini','20 min','+10%']])}
+ <p>Il sale grosso va messo subito prima o almeno 40 minuti prima: puoi salare quando la togli dal frigo.</p>`],
+ ['Temperature al cuore',`<p>Togli la carne 2–3 °C prima del valore finale: nel riposo la temperatura sale ancora.</p>
+ ${tbl(['Carne','Al sangue','Media-al sangue','Media','Ben cotta'],[['Manzo','50–52 °C','54–56 °C','58–60 °C','65 °C+'],['Agnello','—','55–57 °C','58–60 °C','65 °C+'],['Maiale (tagli interi)','—','—','63–65 °C','70 °C'],['Pollo, petto','—','—','—','74 °C'],['Pollo, cosce','—','—','—','80–85 °C'],['Macinati e salsicce','—','—','—','71 °C'],['Pesce','—','—','52–55 °C','58–60 °C']])}`],
+ ['Marinature e condimenti',()=>Object.values(MAR).map(m=>`<div class="mar" style="margin-bottom:10px"><b>${esc(m.n)}</b> <span class="tm">${esc(m.t)}</span><p>${esc(m.i)}</p></div>`).join('')],
+ ['Gas e bombola',`<ul><li>Il Tahoe va a GPL in bombola: in Italia 10 o 15 kg, con riduttore per GPL a 30 mbar e tubo omologato (cambialo alla scadenza stampata).</li><li>A ogni collegamento fai la prova con acqua e sapone sui raccordi: se fa bolle c'è una perdita.</li><li>Consumo indicativo: tutti e 4 i bruciatori al massimo circa 1 kg di GPL all'ora; una grigliata normale 0,6–0,9 kg all'ora.</li><li>Tieni una bombola di scorta per le grigliate grandi.</li><li>A fine uso chiudi sempre la valvola della bombola.</li></ul>`],
+ ['Errori e pulizia',`<p><b>Errori comuni</b></p><ul><li>Griglia non preriscaldata: la carne si attacca e non fa crosta.</li><li>Girare e bucare con la forchetta: usa solo la pinza.</li><li>Fiammate: sposta la carne nella zona spenta, non spruzzare acqua.</li><li>Tagliare la carne appena tolta: il succo finisce sul tagliere.</li><li>Andare "a occhio" sui tagli spessi: usa il termometro.</li></ul>
+ <p><b>Pulizia</b></p><ol><li>A fine cottura: bruciatori al massimo 5 minuti a coperchio chiuso.</li><li>Spazzola le griglie inox da calde, con una spazzola senza setole che si staccano.</li><li>Da freddo: svuota e pulisci il cassetto dei grassi.</li><li>Ogni 4–6 grigliate: smonta griglie e diffusori e sgrassali.</li><li>Inox esterno: panno morbido nel senso della satinatura.</li><li>Sempre con la copertura quando non lo usi.</li></ol>`]
+];
+function renderManual(){$('#manual').innerHTML=MANUAL.map(([t,b],i)=>`<details class="man"${i===0?' open':''}><summary>${t}</summary><div class="mbody">${typeof b==='function'?b():b}</div></details>`).join('')}
+
+/* ---------- schede ---------- */
+function showTab(id){
+  document.querySelectorAll('section[data-tab]').forEach(s=>s.hidden=s.dataset.tab!==id);
+  document.querySelectorAll('.tabbar button').forEach(b=>b.setAttribute('aria-selected',b.dataset.go===id));
+  if(id==='grigliata')renderG();if(id==='salvati')renderSaved();
+  window.scrollTo(0,0);store.set('tab',id);
+}
+
+/* ---------- timer ---------- */
+let AC=null,wake=null,TM=null,raf=null;
+function beep(n){try{if(!AC)return;const t0=AC.currentTime;for(let i=0;i<n;i++){const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=i%2?660:880;g.gain.setValueAtTime(.0001,t0+i*.32);g.gain.exponentialRampToValueAtTime(.35,t0+i*.32+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+i*.32+.26);o.connect(g).connect(AC.destination);o.start(t0+i*.32);o.stop(t0+i*.32+.28)}}catch(e){}}
+function say(txt){try{if(!$('#tmVoice').checked||!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='it-IT';u.rate=1.02;speechSynthesis.speak(u)}catch(e){}}
+async function lock(){try{if(navigator.wakeLock)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&TM&&!TM.done)lock()});
+function unlockAudio(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
+
+function startSteps(){
+  const cut=CUT[S.cut],r=LAST||compute(cut,S);let at=0;const ev=r.steps.map(x=>{const e={at,z:x.z,t:x.t,probe:x.probe?`Sonda: togli a ${x.probe} °C`:'',dur:x.s};at+=x.s;return e});
+  startEvents(short(cut),ev,at,true,{single:{cut:cut.id,s:Object.assign({},S),name:short(cut)}});
+}
+function startEvents(title,ev,end,seq,rec){
+  unlockAudio();lock();
+  TM={title,ev:ev.map(x=>Object.assign({},x)),end,seq:!!seq,rec:rec||{},start:Date.now(),paused:0,pausedAt:0,idx:-1,done:false};
+  $('#tmTitle').textContent=title;$('#tmPause').textContent='Pausa';$('#timer').hidden=false;document.body.style.overflow='hidden';
+  say(seq?`Si parte. ${ev[0].t}`:`Si parte. ${ev[0].t}`);
+  tick();
+}
+function elapsed(){return((TM.pausedAt||Date.now())-TM.start-TM.paused)/1000}
+function tick(){
+  if(!TM)return;const el=elapsed();const ev=TM.ev;
+  let idx=-1;for(let i=0;i<ev.length;i++)if(ev[i].at<=el+.05)idx=i;
+  if(el>=TM.end&&!TM.done){TM.done=true;finish();return}
+  if(idx!==TM.idx){const first=TM.idx===-1;TM.idx=idx;if(!first){beep(4);try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}$('#timer').classList.remove('flash');void $('#timer').offsetWidth;$('#timer').classList.add('flash');say(ev[idx].t+(ev[idx].probe?'. '+ev[idx].probe:''))}}
+  const cur=ev[Math.max(0,idx)],nx=ev[idx+1];
+  const zone=ZONES[cur.z];$('#tmZone').style.setProperty('--zc',`var(--${zone.c})`);
+  $('#tmZp').className='zp '+zone.c;$('#tmZp').textContent=zone.l;$('#tmNow').textContent=cur.t;$('#tmProbe').textContent=cur.probe||'';
+  const nextAt=nx?nx.at:TM.end;const left=nextAt-el;
+  $('#tmCount').textContent=clock(left);
+  if(TM.seq){$('#tmSub').textContent=`Passaggio ${idx+1} di ${ev.length} · fine tra ${clock(TM.end-el)}`;const segLen=nextAt-cur.at;$('#tmBar').style.width=Math.min(100,(1-left/segLen)*100)+'%'}
+  else{$('#tmSub').textContent=`Tutto pronto tra ${clock(TM.end-el)}`;$('#tmBar').style.width=Math.min(100,el/TM.end*100)+'%'}
+  const up=ev.slice(idx+1,idx+5);
+  $('#tmNext').innerHTML=nx?`<small>Prossimo</small>${esc(nx.t)}${up.length>1?`<ul>${up.slice(1).map(x=>`<li><span>+${clock(x.at-el)}</span>${esc(x.t)}</li>`).join('')}</ul>`:''}`:`<small>Prossimo</small>Fine cottura`;
+  clearTimeout(raf);raf=setTimeout(tick,250);
+}
+function finish(){
+  clearTimeout(raf);beep(8);try{navigator.vibrate&&navigator.vibrate([400,200,400,200,400])}catch(e){}
+  say(TM.seq?'Pronto. Buon appetito!':'Tutto pronto. Si mangia!');
+  $('#tmZp').className='zp z-rest';$('#tmZp').textContent='Fatto';$('#tmZone').style.setProperty('--zc','var(--z-rest)');
+  $('#tmNow').textContent='Pronto, buon appetito!';$('#tmProbe').textContent='';$('#tmCount').textContent='00:00';$('#tmSub').textContent='';$('#tmBar').style.width='100%';$('#tmNext').innerHTML=outcomeHTML();
+}
+function outcomeHTML(){
+  const items=TM.rec.single?[TM.rec.single]:(TM.rec.grill||[]);
+  if(!items.length)return'<small>Fine</small>Chiudi il timer quando vuoi.';
+  return`<small>Com'è venuta? Lo segno nel diario</small>`+items.map((x,i)=>`<div class="gout" data-gi="${i}"><b>${esc(x.name)}</b>${x.logged?`<div class="done">Segnato: ${ESITI[x.logged]}</div>`:`<div class="outc"><button data-tesito="${i}:poco">Poco cotta</button><button data-tesito="${i}:giusto">Giusta</button><button data-tesito="${i}:troppo">Troppo cotta</button></div>`}</div>`).join('');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('button[data-tesito]');if(!b||!TM)return;
+  const [i,es]=b.dataset.tesito.split(':');const items=TM.rec.single?[TM.rec.single]:TM.rec.grill;const x=items[+i];if(!x||x.logged)return;
+  addDiary(x.cut,x.s,es);x.logged=es;$('#tmNext').innerHTML=outcomeHTML();renderSaved();if(S.cut===x.cut)renderResult();});
+function closeTimer(){clearTimeout(raf);TM=null;$('#timer').hidden=true;document.body.style.overflow='';try{wake&&wake.release()}catch(e){}wake=null;try{speechSynthesis.cancel()}catch(e){}}
+$('#tmClose').addEventListener('click',closeTimer);
+$('#tmPause').addEventListener('click',()=>{if(!TM||TM.done)return;if(TM.pausedAt){TM.paused+=Date.now()-TM.pausedAt;TM.pausedAt=0;$('#tmPause').textContent='Pausa';tick()}else{TM.pausedAt=Date.now();$('#tmPause').textContent='Riprendi'}});
+$('#tmPlus').addEventListener('click',()=>{if(!TM||TM.done)return;const el=elapsed();TM.ev.forEach(x=>{if(x.at>el)x.at+=60});TM.end+=60;tick()});
+$('#tmSkip').addEventListener('click',()=>{if(!TM||TM.done)return;const el=elapsed();const nx=TM.ev.find(x=>x.at>el+.05);const target=nx?nx.at:TM.end;TM.start-=(target-el)*1000+50;tick()});
+
+/* ---------- dati: applica, backup e ripristino ---------- */
+function applyData(d){
+  if(Array.isArray(d.favs))favs=d.favs;if(d.notes&&typeof d.notes==='object')notes=d.notes;if(Array.isArray(d.diary))diary=d.diary;
+  if(d.grill&&Array.isArray(d.grill.items))G=d.grill;if(d.qty&&d.qty.mix)Q=d.qty;
+  store.set('favs',favs);store.set('notes',notes);store.set('diary',diary);store.set('grill',G);store.set('qty',Q);store.set('upd',d.updatedAt||Date.now());
+  renderResult();renderSaved();renderQ();if(!$('#tab-grigliata').hidden)renderG();
+}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.id==='bkCopy'){const txt=JSON.stringify({app:'griglia-tahoe',v:1,updatedAt:Date.now(),favs,notes,diary,grill:G,qty:Q});const ta=$('#bkTxt');
+    const fallback=()=>{ta.hidden=false;ta.value=txt;ta.focus();ta.select();toast('Backup selezionato: tocca Copia')};
+    try{navigator.clipboard.writeText(txt).then(()=>toast('Backup copiato'),fallback)}catch(err){fallback()}}
+  if(b.id==='bkRestore'){const ta=$('#bkTxt');
+    if(ta.hidden||!ta.value.trim()){ta.hidden=false;ta.value='';ta.focus();toast('Incolla il backup, poi tocca Ripristina');return}
+    try{const d=JSON.parse(ta.value.trim());if(d.app!=='griglia-tahoe')throw 0;d.updatedAt=Date.now();applyData(d);onCloud();ta.value='';ta.hidden=true;toast('Backup ripristinato')}
+    catch(err){toast('Questo testo non è un backup di Griglia Tahoe')}}
+});
+
+/* ---------- funzionamento offline quando è installata come app ---------- */
+try{if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude\.ai|claudeusercontent/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+
+/* ---------- salvataggio nell'account ---------- */
+function setSync(on,msg){const el=$('#sync');el.className='sync '+(on?'on':'off');el.textContent=msg}
+(async function cloud(){
+  if(!window.claude||!window.claude.use){setSync(false,'Salvato su questo telefono: ogni tanto fai un backup');return}
+  let db=null,user=null;
+  try{[db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')])}catch(e){}
+  let uid=null;try{uid=user?await user.id():null}catch(e){}
+  if(!db||!uid){setSync(false,'Salvataggio solo su questo telefono (accedi a Claude per salvarlo nel tuo account)');return}
+  const ref=db.doc('data/users/'+uid+'/app');
+  let queue=Promise.resolve(),timer=null,failed=false;
+  const body=()=>({v:1,updatedAt:store.get('upd',0),favs,notes,diary,grill:G,qty:Q});
+  const flush=()=>{queue=queue.then(()=>ref.set(JSON.parse(JSON.stringify(body())))).then(()=>{failed=false;setSync(true,'Salvato nel tuo account: lo ritrovi su ogni dispositivo')},err=>{
+      if(err&&err.code==='unavailable'){setTimeout(flush,1500+Math.random()*1500);return}
+      failed=true;setSync(false,err&&err.code==='quota_exceeded'?'Spazio dell\'account pieno: elimina qualche voce dal diario':'Non riesco a salvare nell\'account: per ora resta su questo telefono')})};
+  onCloud=()=>{clearTimeout(timer);timer=setTimeout(flush,900)};
+  const adopt=applyData;
+  let first=true;
+  ref.onSnapshot(snap=>{
+    if(snap.metadata&&snap.metadata.hasPendingWrites)return;
+    const d=snap.exists?snap.data():null;const local=store.get('upd',0);
+    if(first){first=false;
+      if(!d){if(local||favs.length||diary.length||Object.keys(notes).length){store.set('upd',local||Date.now());flush()}else setSync(true,'Salvato nel tuo account: lo ritrovi su ogni dispositivo');return}
+      if((d.updatedAt||0)>local)adopt(d);else if(local>(d.updatedAt||0))flush();
+      if(!failed)setSync(true,'Salvato nel tuo account: lo ritrovi su ogni dispositivo');return}
+    if(d&&(d.updatedAt||0)>store.get('upd',0))adopt(d);
+  },err=>{setSync(false,'Sincronizzazione interrotta: i dati restano su questo telefono')});
+})();
+
+/* ---------- avvio ---------- */
+renderCalc();renderManual();renderQ();renderSaved();
+const t0=store.get('tab','cuoci');if(t0!=='cuoci')showTab(t0);
+})();
+</script>
+
+</body>
+</html>
